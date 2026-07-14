@@ -1,0 +1,44 @@
+KONTEKS PROJECT
+Bangun web app screener untuk token yang di-launch di ape.store pada Robinhood Chain (chain id internal ape.store = 4663). Referensi: Robinhood Chain adalah Arbitrum L2, RPC lewat Alchemy.
+Stack wajib: Next.js 14 (App Router), Tailwind, Supabase (Postgres) untuk storage, deploy-ready di Replit. Semua secret (ALCHEMY_ROBINHOOD_RPC_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GITHUB_TOKEN) ada di Replit Secrets — jangan pernah hardcode atau expose ke client-side. Semua request ke Alchemy/Supabase service-role harus lewat Next.js API routes (server-side only).
+API YANG SUDAH DIKETAHUI (ape.store internal API)
+Endpoint detail token per address sudah confirmed jalan, formatnya:
+Kode
+Contoh response asli (field-field ini valid, gunakan struktur ini apa adanya):
+Json
+TUGAS PERTAMA (wajib sebelum coding apapun): cari 2 endpoint lagi dengan cara reverse-engineer network requests di web ape.store (buka ape.store, filter chain Robinhood, inspect tab Network):
+List/board endpoint — yang me-return array token untuk chain 4663 (untuk populate screener). Kemungkinan pola: api/board/4663, api/tokens?chain=4663, atau sejenis.
+Trades/holders endpoint per token — untuk dapat breakdown buyer vs seller count dan riwayat transaksi per wallet (dibutuhkan untuk fitur bundle-wallet).
+Kalau endpoint publik ape.store tidak menyediakan data trade granular per wallet, fallback-nya: pakai Alchemy RPC (ALCHEMY_ROBINHOOD_RPC_URL) untuk baca event log dari pairAddress / router contract langsung (decode Transfer/Swap events). Cari dulu contract ape.store router address di chain 4663 (bisa lewat to address di transaksi buy/sell pada explorer Robinhood Chain).
+Jangan lanjut ke coding fitur lain sebelum 2 endpoint di atas ketemu atau fallback RPC-nya jelas — laporkan hasil temuan dulu sebelum lanjut ke Phase 2.
+FITUR — DIKERJAKAN BERURUTAN PER PHASE
+Phase 1 — Screener list (MVP)
+Grid/table token: name, symbol, logo, MC, volume, harga, jumlah holder
+Sort: volume, MC (asc/desc), alfabetis (nama)
+Filter dasar: search by name/symbol
+Data dari list endpoint (atau polling api/token/4663/{address} per token kalau list endpoint tidak ketemu — tapi ini kurang ideal untuk banyak token, jadi list endpoint prioritas tinggi)
+Phase 2 — Token detail page
+Semua field dari api/token/4663/{address}: logo, description, twitter, telegram, website, MC realtime, volume, holders, price
+Auto-refresh berkala (polling interval wajar, misal 15-30 detik, jangan spam API ape.store)
+Phase 3 — Dev wallet tracking
+Table Supabase wallet_launches: catat setiap creator address + token yang dia deploy (ambil dari field creator tiap kali token baru masuk ke sistem)
+Di token detail page: kalau creator address sudah pernah launch token lain sebelumnya, tampilkan badge warning "Wallet ini sudah launch N token lain" + list token-nya
+Phase 4 — Wallet funding trace
+Pakai Alchemy RPC: cek riwayat transaksi masuk ke wallet creator sebelum deployDate — kalau ada transfer dari wallet lain persis sebelum deploy, catat sebagai kandidat "funding wallet"
+Simpan di Supabase wallet_transfers (from, to, tx_hash, timestamp, amount)
+Phase 5 — Bundle wallet detection
+Heuristic dasar: kalau wallet A mengirim token (bukan native currency) hasil launch-nya sendiri ke wallet B dalam waktu dekat setelah deploy → flag A dan B sebagai "possible same entity"
+Simpan di Supabase bundle_flags (wallet_a, wallet_b, evidence_tx, confidence_note)
+Tampilkan flag ini di token page sebagai warning, bukan sebagai fakta pasti (gunakan bahasa "indikasi", bukan "terbukti")
+SUPABASE SCHEMA (buat di awal Phase 1, sebelum coding fitur)
+Sql
+UI REQUIREMENTS
+Desain fresh, clean, profesional — jangan generic AI template (hindari purple gradient, font Inter/Roboto default, layout kotak simetris membosankan)
+Konten default Bahasa Inggris, sediakan language switcher (minimal Inggris + Indonesia) pakai i18n sederhana (next-intl atau JSON dictionary manual, jangan over-engineer)
+Mobile-responsive
+ATURAN KERJA (biar hemat credit Replit)
+Kerjakan Phase 1 penuh (schema + endpoint discovery + screener list + sort/filter) dalam satu batch kerja tanpa berhenti tanya izin tiap langkah kecil.
+Baru stop dan laporkan ke user pada 3 titik: (a) setelah endpoint discovery selesai, (b) setelah Phase 1 selesai & bisa di-preview, (c) setelah Phase 3 selesai (karena Phase 4-5 butuh keputusan soal RPC cost/rate limit).
+Jangan generate boilerplate/komentar/TODO yang tidak diminta.
+Kalau ketemu blocker (endpoint tidak ketemu, rate limit, dll), laporkan dengan bukti (request/response yang dicoba), jangan menebak-nebak diam-diam.
+Test tiap phase jalan (bisa di-preview) sebelum lanjut ke phase berikutnya.
