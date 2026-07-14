@@ -1,12 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { dictionaries, Locale } from "./dictionaries";
+import { dictionaries, Dictionary, Locale } from "./dictionaries";
 
 interface LanguageContextValue {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: typeof dictionaries.en;
+  t: Dictionary;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);

@@ -1,6 +1,34 @@
 export type Locale = "en" | "id";
 
-export const dictionaries = {
+export interface Dictionary {
+  brand: string;
+  tagline: string;
+  searchPlaceholder: string;
+  columns: {
+    token: string;
+    price: string;
+    marketCap: string;
+    volume: string;
+    holders: string;
+    created: string;
+  };
+  sort: {
+    marketCap: string;
+    volume: string;
+    name: string;
+    newest: string;
+  };
+  order: { desc: string; asc: string };
+  empty: string;
+  loading: string;
+  error: string;
+  liveBadge: string;
+  holdersUnavailable: string;
+  resultCount: string;
+  footerNote: string;
+}
+
+export const dictionaries: Record<Locale, Dictionary> = {
   en: {
     brand: "Robinhood Chain Screener",
     tagline: "Live token board for ape.store on Robinhood Chain",
@@ -55,6 +83,4 @@ export const dictionaries = {
     resultCount: "{count} token di Robinhood Chain",
     footerNote: "Data diambil langsung dari ape.store. Bukan saran finansial.",
   },
-} as const;
-
-export type Dictionary = typeof dictionaries.en;
+};

@@ -79,7 +79,7 @@ export function TokenTable({ items }: { items: ApeStoreTokenListItem[] }) {
               </td>
               <td className="px-4 py-3 text-right font-mono tabular text-ink">{formatUsd(item.marketCap)}</td>
               <td className="px-4 py-3 text-right font-mono tabular text-muted">
-                {item.volumeStat != null ? formatUsd(item.volumeStat) : "—"}
+                {item.volumeStat != null ? formatUsd(item.volumeStat.volumeUSD) : "—"}
               </td>
               <td className="px-4 py-3 text-right font-mono tabular text-muted">{t.holdersUnavailable}</td>
               <td className="px-4 py-3 text-right font-mono tabular text-muted">

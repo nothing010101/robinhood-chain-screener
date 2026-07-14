@@ -33,7 +33,13 @@ export interface ApeStoreTokenListItem {
   dexPaid: boolean;
   isStreaming: boolean;
   streamViewers: number;
-  volumeStat: number | null;
+  volumeStat: {
+    id: number;
+    mCap: number;
+    transactions: number;
+    volume: number;
+    volumeUSD: number;
+  } | null;
 }
 
 export interface ApeStoreTokenListResponse {

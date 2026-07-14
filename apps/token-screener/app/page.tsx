@@ -70,7 +70,7 @@ export default function HomePage() {
           cmp = a.marketCap - b.marketCap;
           break;
         case "volume":
-          cmp = (a.volumeStat ?? 0) - (b.volumeStat ?? 0);
+          cmp = (a.volumeStat?.volumeUSD ?? 0) - (b.volumeStat?.volumeUSD ?? 0);
           break;
         case "name":
           cmp = a.name.localeCompare(b.name);
