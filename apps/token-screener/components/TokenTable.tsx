@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { formatUsd, formatPriceRaw, formatRelativeTime, shortenAddress } from "@/lib/format";
@@ -34,6 +35,7 @@ function TokenLogo({ item }: { item: ApeStoreTokenListItem }) {
 
 export function TokenTable({ items }: { items: ApeStoreTokenListItem[] }) {
   const { t } = useLanguage();
+  const router = useRouter();
 
   return (
     <div className="overflow-x-auto rounded-lg border border-line">
@@ -52,7 +54,8 @@ export function TokenTable({ items }: { items: ApeStoreTokenListItem[] }) {
           {items.map((item, i) => (
             <tr
               key={item.id}
-              className={`group border-b border-line/60 transition-colors hover:bg-acid/5 ${
+              onClick={() => router.push(`/token/${item.chain}/${item.address}`)}
+              className={`group cursor-pointer border-b border-line/60 transition-colors hover:bg-acid/5 ${
                 i % 2 === 1 ? "bg-white/[0.015]" : ""
               }`}
             >

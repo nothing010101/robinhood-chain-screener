@@ -26,6 +26,29 @@ export interface Dictionary {
   holdersUnavailable: string;
   resultCount: string;
   footerNote: string;
+  detail: {
+    back: string;
+    liquidity: string;
+    kingProgress: string;
+    apeProgress: string;
+    dexPaid: string;
+    dexPaidYes: string;
+    dexPaidNo: string;
+    tradesTitle: string;
+    tradesEmpty: string;
+    tradesLoading: string;
+    columns: {
+      wallet: string;
+      side: string;
+      amount: string;
+      price: string;
+      time: string;
+      txn: string;
+    };
+    side: { buy: string; sell: string };
+    notFound: string;
+    holdersNote: string;
+  };
 }
 
 export const dictionaries: Record<Locale, Dictionary> = {
@@ -55,6 +78,29 @@ export const dictionaries: Record<Locale, Dictionary> = {
     holdersUnavailable: "N/A",
     resultCount: "{count} tokens on Robinhood Chain",
     footerNote: "Data sourced live from ape.store. Not financial advice.",
+    detail: {
+      back: "Back to screener",
+      liquidity: "Virtual liquidity",
+      kingProgress: "King progress",
+      apeProgress: "Ape progress",
+      dexPaid: "DEX paid",
+      dexPaidYes: "Paid",
+      dexPaidNo: "Not paid",
+      tradesTitle: "Recent trades",
+      tradesEmpty: "No trades yet.",
+      tradesLoading: "Loading trades\u2026",
+      columns: {
+        wallet: "Wallet",
+        side: "Side",
+        amount: "Amount",
+        price: "Price",
+        time: "Time",
+        txn: "Tx",
+      },
+      side: { buy: "Buy", sell: "Sell" },
+      notFound: "Token not found.",
+      holdersNote: "Holder count isn't available yet for this chain.",
+    },
   },
   id: {
     brand: "Screener Robinhood Chain",
@@ -82,5 +128,28 @@ export const dictionaries: Record<Locale, Dictionary> = {
     holdersUnavailable: "N/A",
     resultCount: "{count} token di Robinhood Chain",
     footerNote: "Data diambil langsung dari ape.store. Bukan saran finansial.",
+    detail: {
+      back: "Kembali ke screener",
+      liquidity: "Virtual liquidity",
+      kingProgress: "Progress king",
+      apeProgress: "Progress ape",
+      dexPaid: "DEX paid",
+      dexPaidYes: "Sudah bayar",
+      dexPaidNo: "Belum bayar",
+      tradesTitle: "Transaksi terbaru",
+      tradesEmpty: "Belum ada transaksi.",
+      tradesLoading: "Memuat transaksi\u2026",
+      columns: {
+        wallet: "Wallet",
+        side: "Sisi",
+        amount: "Jumlah",
+        price: "Harga",
+        time: "Waktu",
+        txn: "Tx",
+      },
+      side: { buy: "Beli", sell: "Jual" },
+      notFound: "Token tidak ditemukan.",
+      holdersNote: "Jumlah holder belum tersedia untuk chain ini.",
+    },
   },
 };
