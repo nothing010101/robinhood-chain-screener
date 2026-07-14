@@ -7,7 +7,7 @@ export function LanguageSwitcher() {
 
   return (
     <div className="flex items-center rounded-full border border-line bg-panel p-0.5 text-xs font-mono">
-      {(["en", "id"] as const).map((code) => (
+      {(["en", "zh", "de"] as const).map((code) => (
         <button
           key={code}
           onClick={() => setLocale(code)}
