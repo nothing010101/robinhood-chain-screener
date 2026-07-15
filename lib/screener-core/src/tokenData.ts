@@ -57,8 +57,8 @@ export async function getLiveTokens(
   order: SortOrder = "desc",
   search = "",
 ): Promise<TokenRow[]> {
-  const url  = process.env.SUPABASE_URL_PROJECT;
-  const key  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url  = process.env.SUPABASE_URL_PROJECT ?? "";
+  const key  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
   if (!url || !key) {
     console.error("[tokenData] SUPABASE_URL_PROJECT / SUPABASE_SERVICE_ROLE_KEY not set");
     return [];
@@ -94,7 +94,6 @@ export async function getLiveTokens(
         "Range":        `${from}-${from + PAGE - 1}`,
         "Range-Unit":   "items",
       },
-      cache: "no-store",
     });
     if (!res.ok) {
       const body = await res.text().catch(() => "");
