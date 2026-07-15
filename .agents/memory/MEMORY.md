@@ -4,3 +4,4 @@
 - [Railway deploy via project token](railway-project-token-deploy.md) — project tokens can't do account-level/raw-mutation calls; free-plan service limits block new services even when existing ones are all Failed.
 - [ape.store price derivation](apestore-price-derivation.md) — list endpoint has no real price field; derive it from marketCap/totalSupply(~1e9) instead of scaling the raw priceAfter integer.
 - [ape.store holders + Vercel outDir](apestore-holder-count-and-vercel-outdir.md) — holders field is always 0 (need Alchemy Transfer-history fallback, cached); Vercel 404s if outputDirectory doesn't match a custom vite outDir.
+- [Supabase tokens table](supabase-tokens-table.md) — schema, 1000-row cap workaround (parallel Range pagination), getLiveTokens uses raw fetch not supabase-js, backfill on worker startup, sort is client-side JS not DB.
