@@ -32,7 +32,7 @@ export function derivePriceFromMarketCap(marketCap: number | null | undefined): 
 
 export function formatRelativeTime(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const date = new Date(iso + (iso.endsWith("Z") ? "" : "Z"));
+  const date = new Date(iso);
   const diffMs = Date.now() - date.getTime();
   const mins = Math.floor(diffMs / 60000);
   if (mins < 1) return "now";

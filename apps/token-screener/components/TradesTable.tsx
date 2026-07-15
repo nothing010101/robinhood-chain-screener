@@ -5,7 +5,7 @@ import { shortenAddress } from "@/lib/format";
 import type { ApeStoreTrade } from "@/lib/apestore";
 
 function timeAgo(iso: string): string {
-  const date = new Date(iso + (iso.endsWith("Z") ? "" : "Z"));
+  const date = new Date(iso);
   const secs = Math.floor((Date.now() - date.getTime()) / 1000);
   if (secs < 60) return `${secs}s`;
   const mins = Math.floor(secs / 60);

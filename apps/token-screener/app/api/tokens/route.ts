@@ -5,13 +5,56 @@ import type { SortKey, SortOrder } from "@/lib/tokenData";
 
 export const dynamic = "force-dynamic";
 
+// ─── Holder counts ────────────────────────────────────────────────────────────
+// Fetch ALL rows from token_holders for one chain in a single query (no .in()
+// address list — avoids the 414 URL-length bug).  token_holders only contains
+// rows that have been computed (~136 rows), so this is a very small payload.
+interface HolderRow {
+  token_address: string;
+  holder_count:  number;
+  computed_at:   string;
+}
+
+async function getHolderCountsByChain(chain: number): Promise<Map<string, HolderRow>> {
+  const url = process.env.SUPABASE_URL_PROJECT ?? "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  if (!url || !key) return new Map();
+
+  const params = new URLSearchParams({
+    chain:  `eq.${chain}`,
+    select: "token_address,holder_count,computed_at",
+  });
+
+  const res = await fetch(
+    `${url.replace(/\/$/, "")}/rest/v1/token_holders?${params.toString()}`,
+    {
+      headers: {
+        apikey:        key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+
+  if (!res.ok) {
+    console.error("[/api/tokens] getHolderCountsByChain HTTP", res.status);
+    return new Map();
+  }
+
+  const rows: HolderRow[] = (await res.json()) ?? [];
+  const map = new Map<string, HolderRow>();
+  for (const r of rows) map.set(r.token_address.toLowerCase(), r);
+  return map;
+}
+
+// ─── Row mapper ───────────────────────────────────────────────────────────────
 // Map Supabase snake_case row → camelCase shape the UI already understands.
-// This keeps TokenTable / page.tsx type-compatible without a large refactor.
-// Holder counts are intentionally omitted here (holderCount: null) — they are
-// fetched separately on the token detail page.  The /api/tokens list no longer
-// fetches holder counts because passing all 3000+ addresses in a single
-// .in() query would hit the same 414 URL-length bug that existed before.
-function rowToItem(row: Awaited<ReturnType<typeof getLiveTokens>>[number]) {
+// Receives a pre-built holderMap so the holder lookup is O(1) per token.
+function rowToItem(
+  row: Awaited<ReturnType<typeof getLiveTokens>>[number],
+  holderMap: Map<string, HolderRow>,
+) {
+  const h = holderMap.get(row.address.toLowerCase());
   return {
     // Use chain+address as a stable synthetic id (TokenTable uses this as React key)
     id: `${row.chain}_${row.address}`,
@@ -47,13 +90,14 @@ function rowToItem(row: Awaited<ReturnType<typeof getLiveTokens>>[number]) {
     volumeStat:  row.volume_usd != null
       ? { id: 0, mCap: row.market_cap ?? 0, transactions: 0, volume: 0, volumeUSD: row.volume_usd }
       : null,
-    // Holder counts are handled by token detail page — omit from list
-    holderCount:     null as number | null,
-    holderUpdatedAt: null as string | null,
+    // Populated from token_holders if computed; null = not yet computed (N/A)
+    holderCount:     h?.holder_count ?? null,
+    holderUpdatedAt: h?.computed_at  ?? null,
     last_seen_at: row.last_seen_at,
   };
 }
 
+// ─── Route ────────────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const rawSort  = searchParams.get("sort")  ?? "marketCap";
@@ -66,8 +110,12 @@ export async function GET(req: NextRequest) {
   const order: SortOrder = VALID_ORDERS.includes(rawOrder as SortOrder) ? (rawOrder as SortOrder) : "desc";
 
   try {
-    const rows = await getLiveTokens(ROBINHOOD_CHAIN_ID, sort, order);
-    const items = rows.map(rowToItem);
+    // Fetch token list and holder counts in parallel — independent queries
+    const [rows, holderMap] = await Promise.all([
+      getLiveTokens(ROBINHOOD_CHAIN_ID, sort, order),
+      getHolderCountsByChain(ROBINHOOD_CHAIN_ID),
+    ]);
+    const items = rows.map((r) => rowToItem(r, holderMap));
     return NextResponse.json({ items, total: items.length });
   } catch (err) {
     console.error("[/api/tokens]", err);
