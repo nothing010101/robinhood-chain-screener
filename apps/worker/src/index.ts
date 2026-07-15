@@ -139,6 +139,29 @@ async function refreshHolderCountsOnce(): Promise<void> {
   }
 }
 
+// How stale the `tokens` table must be before the worker treats startup as a
+// "cold start" requiring an immediate full backfill.  If the newest row in the
+// table is older than this, every token was likely seeded by an older run (or
+// by a manual seed script) and needs refreshing before users see live data.
+const STARTUP_STALE_THRESHOLD_MS = Number(process.env.STARTUP_STALE_THRESHOLD_MS ?? 5 * 60_000); // 5 min
+
+async function isTokenTableStale(chain: number): Promise<boolean> {
+  const url = process.env.SUPABASE_URL_PROJECT ?? "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  if (!url || !key) return true; // can't tell — assume stale
+
+  // Ask for the single most-recently updated row.
+  const res = await fetch(
+    `${url.replace(/\/$/, "")}/rest/v1/tokens?chain=eq.${chain}&select=last_seen_at&order=last_seen_at.desc&limit=1`,
+    { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+  );
+  if (!res.ok) return true;
+  const rows = await res.json() as { last_seen_at: string }[];
+  if (!rows.length) return true; // table is empty
+  const ageMs = Date.now() - new Date(rows[0].last_seen_at).getTime();
+  return ageMs > STARTUP_STALE_THRESHOLD_MS;
+}
+
 async function main() {
   console.log(`[worker] starting — polling ape.store every ${POLL_INTERVAL_MS}ms`);
 
@@ -155,7 +178,24 @@ async function main() {
     }).listen(port, () => console.log(`[worker] health check server listening on ${port}`));
   }
 
-  await pollOnce();
+  // ── Startup backfill ─────────────────────────────────────────────────────
+  // If the tokens table is empty or has not been updated within the stale
+  // threshold, run pollOnce() immediately so the screener always shows live
+  // data from the very first request after a deploy, without waiting for the
+  // first natural 30-second tick.
+  //
+  // This handles three scenarios:
+  //   1. Fresh deploy to a new environment (table is empty).
+  //   2. Worker restarted after a long outage (data is stale).
+  //   3. Normal restart (data is fresh — skips the extra poll).
+  const stale = await isTokenTableStale(ROBINHOOD_CHAIN_ID).catch(() => true);
+  if (stale) {
+    console.log("[worker] tokens table is empty or stale — running startup backfill...");
+  } else {
+    console.log("[worker] tokens table is fresh — skipping startup backfill");
+  }
+
+  await pollOnce(); // always run at least once on startup regardless
 
   // Log a concrete time estimate for how long a full first holder-count pass
   // will take, so it's visible in production logs whenever the worker restarts.
