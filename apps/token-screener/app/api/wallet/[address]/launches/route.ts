@@ -4,20 +4,31 @@ import { getLaunchesByCreator } from "@/lib/walletLaunches";
 
 export const dynamic = "force-dynamic";
 
-// Returns every token we've recorded for this creator address on Robinhood
-// Chain (Phase 3 dev-wallet tracking). Includes the token being viewed —
-// callers filter it out client-side.
+// Returns up to 50 launches for this creator, newest first.
+// Supports cursor-based pagination via ?cursor=<ISO deploy_date>.
+// Response: { creator, launches, hasMore, nextCursor }
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { address: string } },
 ) {
   if (!params.address) {
     return NextResponse.json({ error: "Missing address" }, { status: 400 });
   }
 
+  const cursor = req.nextUrl.searchParams.get("cursor") ?? undefined;
+
   try {
-    const launches = await getLaunchesByCreator(ROBINHOOD_CHAIN_ID, params.address);
-    return NextResponse.json({ creator: params.address.toLowerCase(), launches });
+    const { launches, hasMore, nextCursor } = await getLaunchesByCreator(
+      ROBINHOOD_CHAIN_ID,
+      params.address,
+      cursor,
+    );
+    return NextResponse.json({
+      creator: params.address.toLowerCase(),
+      launches,
+      hasMore,
+      nextCursor,
+    });
   } catch (err) {
     console.error("[/api/wallet/:address/launches]", err);
     return NextResponse.json(

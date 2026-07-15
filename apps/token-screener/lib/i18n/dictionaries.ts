@@ -60,6 +60,7 @@ export interface Dictionary {
     otherLaunchesTitle: string;
     deadBadge: string;
     viewToken: string;
+    loadMore: string;
   };
   funding: {
     title: string;
@@ -133,6 +134,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       otherLaunchesTitle: "Other tokens by this creator",
       deadBadge: "Dead",
       viewToken: "View",
+      loadMore: "Load more",
     },
     funding: {
       title: "Funding trace",
@@ -204,6 +206,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       otherLaunchesTitle: "该创建者的其他代币",
       deadBadge: "已死亡",
       viewToken: "查看",
+      loadMore: "加载更多",
     },
     funding: {
       title: "资金追踪",
@@ -275,6 +278,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       otherLaunchesTitle: "Weitere Token dieses Erstellers",
       deadBadge: "Tot",
       viewToken: "Ansehen",
+      loadMore: "Mehr laden",
     },
     funding: {
       title: "Finanzierungsnachverfolgung",

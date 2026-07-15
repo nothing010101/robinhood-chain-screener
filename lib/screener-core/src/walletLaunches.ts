@@ -47,22 +47,81 @@ export async function recordTokenLaunches(items: ApeStoreTokenListItem[]): Promi
   if (error) console.error("[walletLaunches] upsert failed:", error.message);
 }
 
-export async function getLaunchesByCreator(chain: number, creatorAddress: string): Promise<WalletLaunch[]> {
-  const supabase = getSupabaseAdmin();
-  if (!supabase) return [];
+const PAGE_SIZE = 50;
 
-  const { data, error } = await supabase
-    .from("wallet_launches")
-    .select("*")
-    .eq("chain", chain)
-    .eq("creator_address", creatorAddress.toLowerCase())
-    .order("deploy_date", { ascending: false });
+export interface LaunchesByCreatorResult {
+  launches: WalletLaunch[];
+  /** True when exactly PAGE_SIZE rows were returned, meaning more pages likely exist. */
+  hasMore: boolean;
+  /**
+   * ISO deploy_date of the last row — pass as `cursor` in the next call.
+   * Null when there are no more pages (last row has null deploy_date or fewer
+   * than PAGE_SIZE rows were returned).
+   */
+  nextCursor: string | null;
+}
 
-  if (error) {
-    console.error("[walletLaunches] query by creator failed:", error.message);
-    return [];
+/**
+ * Fetch up to PAGE_SIZE (50) launches for a creator, newest first.
+ *
+ * Pass `cursor` (the `nextCursor` from a previous response) to get the next
+ * page.  Uses Supabase REST directly (same as getLiveTokens) to avoid
+ * supabase-js module-singleton issues in Vercel serverless.
+ */
+export async function getLaunchesByCreator(
+  chain: number,
+  creatorAddress: string,
+  cursor?: string,
+): Promise<LaunchesByCreatorResult> {
+  const url = process.env.SUPABASE_URL_PROJECT ?? "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  if (!url || !key) {
+    console.error("[walletLaunches] SUPABASE_URL_PROJECT / SUPABASE_SERVICE_ROLE_KEY not set");
+    return { launches: [], hasMore: false, nextCursor: null };
   }
-  return data ?? [];
+
+  const params = new URLSearchParams({
+    chain:           `eq.${chain}`,
+    creator_address: `eq.${creatorAddress.toLowerCase()}`,
+    order:           "deploy_date.desc.nullslast",
+    limit:           String(PAGE_SIZE),
+    select:          "*",
+  });
+
+  // Cursor-based pagination: fetch rows whose deploy_date is strictly before
+  // the cursor value so we never re-send already-seen rows.
+  if (cursor) {
+    params.set("deploy_date", `lt.${cursor}`);
+  }
+
+  const endpoint = `${url.replace(/\/$/, "")}/rest/v1/wallet_launches?${params.toString()}`;
+
+  let rows: WalletLaunch[];
+  try {
+    const res = await fetch(endpoint, {
+      headers: {
+        apikey:        key,
+        Authorization: `Bearer ${key}`,
+      },
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[walletLaunches] getLaunchesByCreator HTTP ${res.status}:`, body);
+      return { launches: [], hasMore: false, nextCursor: null };
+    }
+    rows = (await res.json() as WalletLaunch[]) ?? [];
+  } catch (err) {
+    console.error("[walletLaunches] getLaunchesByCreator fetch error:", err);
+    return { launches: [], hasMore: false, nextCursor: null };
+  }
+
+  // If we received a full page there might be more rows.  The next cursor is
+  // the deploy_date of the last row; if that's null we can't paginate further.
+  const hasMore = rows.length === PAGE_SIZE;
+  const lastRow = rows[rows.length - 1];
+  const nextCursor = hasMore && lastRow?.deploy_date ? lastRow.deploy_date : null;
+
+  return { launches: rows, hasMore: !!nextCursor, nextCursor };
 }
 
 // Batched lookup for the list view: given a set of creator addresses, return

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
@@ -22,6 +22,9 @@ export default function TokenDetailPage() {
   const [detail, setDetail] = useState<ApeStoreTokenDetailResponse | null>(null);
   const [trades, setTrades] = useState<ApeStoreTrade[]>([]);
   const [otherLaunches, setOtherLaunches] = useState<WalletLaunch[]>([]);
+  const [launchesHasMore, setLaunchesHasMore] = useState(false);
+  const [launchesNextCursor, setLaunchesNextCursor] = useState<string | null>(null);
+  const [launchesLoadingMore, setLaunchesLoadingMore] = useState(false);
   const [fundingTrace, setFundingTrace] = useState<FundingTraceData | null>(null);
   const [funderFanOut, setFunderFanOut] = useState(0);
   const [fundingStatus, setFundingStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -96,6 +99,8 @@ export default function TokenDetailPage() {
           (l: WalletLaunch) => l.token_address.toLowerCase() !== currentAddress,
         );
         setOtherLaunches(launches);
+        setLaunchesHasMore(data.hasMore ?? false);
+        setLaunchesNextCursor(data.nextCursor ?? null);
       })
       .catch((err) => console.error("[dev-wallet]", err));
 
@@ -103,6 +108,31 @@ export default function TokenDetailPage() {
       cancelled = true;
     };
   }, [detail?.token.creator, params.address]);
+
+  // Load the next page of launches when the user clicks "Load More".
+  const handleLoadMoreLaunches = useCallback(async () => {
+    const creator = detail?.token.creator;
+    if (!creator || !launchesNextCursor || launchesLoadingMore) return;
+
+    setLaunchesLoadingMore(true);
+    try {
+      const res = await fetch(
+        `/api/wallet/${creator}/launches?cursor=${encodeURIComponent(launchesNextCursor)}`,
+      );
+      const data = await res.json();
+      const currentAddress = params.address?.toLowerCase();
+      const newLaunches = (data.launches ?? []).filter(
+        (l: WalletLaunch) => l.token_address.toLowerCase() !== currentAddress,
+      );
+      setOtherLaunches((prev) => [...prev, ...newLaunches]);
+      setLaunchesHasMore(data.hasMore ?? false);
+      setLaunchesNextCursor(data.nextCursor ?? null);
+    } catch (err) {
+      console.error("[dev-wallet load-more]", err);
+    } finally {
+      setLaunchesLoadingMore(false);
+    }
+  }, [detail?.token.creator, launchesNextCursor, launchesLoadingMore, params.address]);
 
   // Phase 4: wallet funding trace — who first funded this creator wallet, via
   // Alchemy RPC. Fetched once per creator, not on the 20s poll (historical
@@ -252,7 +282,14 @@ export default function TokenDetailPage() {
 
         <FundingTrace status={fundingStatus} trace={fundingTrace} funderFanOut={funderFanOut} />
 
-        <DevWalletWarning chain={token.chain} creator={token.creator} otherLaunches={otherLaunches} />
+        <DevWalletWarning
+          chain={token.chain}
+          creator={token.creator}
+          otherLaunches={otherLaunches}
+          hasMore={launchesHasMore}
+          isLoadingMore={launchesLoadingMore}
+          onLoadMore={handleLoadMoreLaunches}
+        />
 
         <section className="mt-8">
           <h2 className="mb-3 font-display text-lg font-semibold text-ink">{t.detail.tradesTitle}</h2>

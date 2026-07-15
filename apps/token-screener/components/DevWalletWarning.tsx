@@ -12,14 +12,23 @@ export function DevWalletWarning({
   chain,
   creator,
   otherLaunches,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
 }: {
   chain: number;
   creator: string;
   otherLaunches: WalletLaunch[];
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
 }) {
   const { t } = useLanguage();
 
   if (otherLaunches.length === 0) return null;
+
+  // Show "{count}+" when there are more pages, plain count otherwise.
+  const countLabel = hasMore ? `${otherLaunches.length}+` : String(otherLaunches.length);
 
   return (
     <div className="mt-6 rounded-lg border border-bear/30 bg-bear/5 px-4 py-4">
@@ -28,7 +37,7 @@ export function DevWalletWarning({
         {t.devWallet.warningTitle}
       </div>
       <p className="mt-1 font-mono text-xs text-muted">
-        {t.devWallet.warningBody.replace("{count}", String(otherLaunches.length))}
+        {t.devWallet.warningBody.replace("{count}", countLabel)}
       </p>
 
       <div className="mt-3 space-y-1.5">
@@ -58,6 +67,20 @@ export function DevWalletWarning({
             </Link>
           </div>
         ))}
+
+        {/* Load More — only rendered when the server indicates more pages exist */}
+        {hasMore && (
+          <button
+            type="button"
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="mt-1 w-full rounded-md border border-line/60 bg-panel py-2 font-mono text-xs text-muted
+                       transition-colors hover:border-acid hover:text-acid
+                       disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoadingMore ? "…" : t.devWallet.loadMore}
+          </button>
+        )}
       </div>
 
       <div className="mt-3 font-mono text-[11px] text-muted">
