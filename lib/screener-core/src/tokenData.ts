@@ -43,38 +43,64 @@ const SORT_COLUMN: Record<SortKey, string> = {
 
 // ─── Read ────────────────────────────────────────────────────────────────────
 
+// Sort column names as understood by the Supabase REST ?order= param.
+const REST_SORT: Record<SortKey, string> = {
+  marketCap: "market_cap",
+  volume:    "volume_usd",
+  newest:    "deploy_date",
+  name:      "name",
+};
+
 export async function getLiveTokens(
   chain: number,
   sort: SortKey = "marketCap",
   order: SortOrder = "desc",
   search = "",
 ): Promise<TokenRow[]> {
-  const supabase = getSupabaseAdmin();
-  if (!supabase) return [];
-
-  const col = SORT_COLUMN[sort];
-  // Nulls last for DESC (high values first), nulls first for ASC (alphabetical).
-  const ascending = order === "asc";
-
-  let query = supabase
-    .from("tokens")
-    .select("*")
-    .eq("chain", chain)
-    .eq("is_dead", false)
-    .order(col, { ascending, nullsFirst: false });
-
-  if (search.trim()) {
-    // Case-insensitive prefix/substring match on name and symbol.
-    const q = search.trim().toLowerCase();
-    query = query.or(`name.ilike.%${q}%,symbol.ilike.%${q}%`);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    console.error("[tokenData] getLiveTokens failed:", error.message);
+  const url  = process.env.SUPABASE_URL_PROJECT;
+  const key  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    console.error("[tokenData] SUPABASE_URL_PROJECT / SUPABASE_SERVICE_ROLE_KEY not set");
     return [];
   }
-  return (data ?? []) as TokenRow[];
+
+  const col       = REST_SORT[sort];
+  const direction = order === "asc" ? "asc.nullslast" : "desc.nullslast";
+
+  // Build Supabase REST query directly — bypasses supabase-js client entirely,
+  // which avoids module-singleton / bundling issues in Vercel serverless.
+  const params = new URLSearchParams({
+    "chain":   `eq.${chain}`,
+    "is_dead": "eq.false",
+    "order":   `${col}.${direction}`,
+    "limit":   "10000",
+    "select":  "*",
+  });
+
+  if (search.trim()) {
+    params.set("or", `(name.ilike.*${search.trim()}*,symbol.ilike.*${search.trim()}*)`);
+  }
+
+  const endpoint = `${url.replace(/\/$/, "")}/rest/v1/tokens?${params.toString()}`;
+
+  const res = await fetch(endpoint, {
+    headers: {
+      apikey:          key,
+      Authorization:   `Bearer ${key}`,
+      "Content-Type":  "application/json",
+    },
+    // Never cache — data changes every 30 s from the worker.
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[tokenData] getLiveTokens HTTP ${res.status}:`, body);
+    return [];
+  }
+
+  const data = await res.json() as TokenRow[];
+  return data ?? [];
 }
 
 // ─── Write ───────────────────────────────────────────────────────────────────
