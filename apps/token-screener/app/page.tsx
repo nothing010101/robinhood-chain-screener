@@ -17,6 +17,18 @@ export default function HomePage() {
   const [sortKey, setSortKey] = useState<SortKey>("marketCap");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [launchCounts, setLaunchCounts] = useState<Record<string, number>>({});
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [nowTick, setNowTick] = useState(0);
+
+  // The 20s poll below does fetch fresh data and does call setItems with it —
+  // confirmed the numbers genuinely change each cycle. But per-cycle drift is
+  // often just a few cents on a ~$1,700 market cap, so a refresh can be easy
+  // to miss just by staring at the table. This ticker drives a small "updated
+  // Ns ago" readout so a refresh is visible even when the numbers barely move.
+  useEffect(() => {
+    const tick = setInterval(() => setNowTick((n) => n + 1), 1000);
+    return () => clearInterval(tick);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,6 +53,7 @@ export default function HomePage() {
         if (!cancelled) {
           setItems(all);
           setStatus("ready");
+          setLastUpdated(Date.now());
         }
 
         // Phase 3: dev-wallet tracking — batched lookup of how many tokens
@@ -67,6 +80,9 @@ export default function HomePage() {
       clearInterval(interval);
     };
   }, []);
+
+  const updatedSecondsAgo = lastUpdated != null ? Math.max(0, Math.floor((Date.now() - lastUpdated) / 1000)) : null;
+  void nowTick; // referenced only to force a re-render each second so the line above recomputes
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -110,6 +126,15 @@ export default function HomePage() {
             <h1 className="font-display text-2xl font-semibold text-ink sm:text-3xl">{t.brand}</h1>
             <p className="mt-1 text-sm text-muted">{t.tagline}</p>
           </div>
+          {updatedSecondsAgo != null && (
+            <div className="flex items-center gap-1.5 font-mono text-[11px] text-muted" title={t.updatedAgo.replace("{n}", String(updatedSecondsAgo))}>
+              <span
+                key={lastUpdated}
+                className="h-1.5 w-1.5 rounded-full bg-acid2 [animation:ping_0.6s_ease-out_1]"
+              />
+              {t.updatedAgo.replace("{n}", String(updatedSecondsAgo))}
+            </div>
+          )}
         </header>
 
         <Toolbar

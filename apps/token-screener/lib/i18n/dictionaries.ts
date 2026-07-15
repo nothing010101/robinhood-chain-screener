@@ -24,6 +24,7 @@ export interface Dictionary {
   error: string;
   liveBadge: string;
   holdersUnavailable: string;
+  updatedAgo: string;
   resultCount: string;
   footerNote: string;
   detail: {
@@ -94,6 +95,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
     error: "Couldn't reach ape.store. Retrying shortly.",
     liveBadge: "Live",
     holdersUnavailable: "N/A",
+    updatedAgo: "Updated {n}s ago",
     resultCount: "{count} tokens on Robinhood Chain",
     footerNote: "Data sourced live from ape.store. Not financial advice.",
     detail: {
@@ -162,6 +164,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
     error: "无法连接到 ape.store，稍后重试。",
     liveBadge: "实时",
     holdersUnavailable: "暂无",
+    updatedAgo: "{n} 秒前更新",
     resultCount: "Robinhood Chain 上共 {count} 个代币",
     footerNote: "数据实时来自 ape.store，非投资建议。",
     detail: {
@@ -230,6 +233,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
     error: "ape.store nicht erreichbar. Erneuter Versuch in Kürze.",
     liveBadge: "Live",
     holdersUnavailable: "N/V",
+    updatedAgo: "Vor {n}s aktualisiert",
     resultCount: "{count} Token auf der Robinhood Chain",
     footerNote: "Daten live von ape.store. Keine Anlageberatung.",
     detail: {
