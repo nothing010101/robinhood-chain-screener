@@ -48,6 +48,10 @@ export interface ApeStoreTokenListItem {
   // Supabase cache (ape.store's own `holders` field is always 0 on this
   // chain). `null` means we haven't computed it yet.
   holderCount?: number | null;
+  // Timestamp of the cached holder-count row (Supabase `token_holders`
+  // .computed_at), so the UI can show "as of {time}" instead of implying a
+  // live number. `null` means we haven't computed it yet.
+  holderUpdatedAt?: string | null;
 }
 
 export interface ApeStoreTokenListResponse {

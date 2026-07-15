@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
     const items = data.items.map((item) => ({
       ...item,
       holderCount: holderCounts[item.address.toLowerCase()]?.holder_count ?? null,
+      holderUpdatedAt: holderCounts[item.address.toLowerCase()]?.computed_at ?? null,
     }));
 
     return NextResponse.json({ ...data, items });

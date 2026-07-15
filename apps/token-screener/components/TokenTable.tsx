@@ -102,7 +102,24 @@ export function TokenTable({
                 {item.volumeStat != null ? formatUsd(item.volumeStat.volumeUSD) : "—"}
               </td>
               <td className="px-4 py-3 text-right font-mono tabular text-muted">
-                {item.holderCount != null ? item.holderCount.toLocaleString() : t.holdersUnavailable}
+                {item.holderCount != null ? (
+                  <span
+                    title={
+                      item.holderUpdatedAt
+                        ? t.holdersAsOf.replace("{t}", formatRelativeTime(item.holderUpdatedAt))
+                        : undefined
+                    }
+                  >
+                    {item.holderCount.toLocaleString()}
+                    {item.holderUpdatedAt && (
+                      <span className="ml-1 text-[10px] text-muted/70">
+                        ({t.holdersAsOf.replace("{t}", formatRelativeTime(item.holderUpdatedAt))})
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  t.holdersUnavailable
+                )}
               </td>
               <td className="px-4 py-3 text-right font-mono tabular text-muted">
                 {formatRelativeTime(item.createDate)}

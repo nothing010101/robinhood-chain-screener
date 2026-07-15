@@ -27,14 +27,25 @@ const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS ?? 30_000);
 // Alchemy — far too slow/expensive to do on every 30s poll. Refresh on a much
 // slower cadence instead, and only for addresses whose cached value is
 // missing or older than the refresh interval itself.
-const HOLDER_REFRESH_INTERVAL_MS = Number(process.env.HOLDER_REFRESH_INTERVAL_MS ?? 5 * 60_000);
+//
+// Tuned for the real live-token total after the ape.store pagination fix
+// (~2,900 tokens, not the ~192 an earlier hardcoded page cap was capturing).
+// 60 tokens every 2 minutes = 30/min, sequential (one Alchemy call at a time,
+// well under rate-limit risk) — a full first pass over every token takes
+// roughly (liveTokenCount / 60) * 2 minutes; see the startup log for the
+// concrete estimate against the current live count.
+const HOLDER_REFRESH_INTERVAL_MS = Number(process.env.HOLDER_REFRESH_INTERVAL_MS ?? 2 * 60_000);
 // Cap how many tokens get a holder-count recompute per cycle so a sudden
 // burst of new launches can't turn one tick into hundreds of Alchemy calls.
-const HOLDER_REFRESH_BATCH_SIZE = Number(process.env.HOLDER_REFRESH_BATCH_SIZE ?? 20);
+const HOLDER_REFRESH_BATCH_SIZE = Number(process.env.HOLDER_REFRESH_BATCH_SIZE ?? 60);
 
 let stopping = false;
 let inFlight = false;
 let latestLiveAddresses: string[] = [];
+// Same addresses as latestLiveAddresses, but ordered highest volume/market
+// cap first — so the tokens people actually care about get a holder count
+// long before a full pass over the whole live list finishes.
+let latestPrioritizedAddresses: string[] = [];
 let holderRefreshInFlight = false;
 
 async function pollOnce(): Promise<void> {
@@ -50,6 +61,16 @@ async function pollOnce(): Promise<void> {
     const items = await fetchAllLiveTokens(ROBINHOOD_CHAIN_ID);
     await recordTokenLaunches(items);
     latestLiveAddresses = items.map((item) => item.address);
+    // Highest market cap first, ties broken by volume — the pairs most
+    // people are actually looking at get a real holder count first, instead
+    // of an arbitrary ape.store page-order pass.
+    latestPrioritizedAddresses = [...items]
+      .sort((a, b) => {
+        const marketCapDiff = (b.marketCap ?? 0) - (a.marketCap ?? 0);
+        if (marketCapDiff !== 0) return marketCapDiff;
+        return (b.volumeStat?.volumeUSD ?? 0) - (a.volumeStat?.volumeUSD ?? 0);
+      })
+      .map((item) => item.address);
     console.log(
       `[worker] polled ${items.length} live tokens on chain ${ROBINHOOD_CHAIN_ID} in ${Date.now() - startedAt}ms`,
     );
@@ -71,17 +92,24 @@ async function refreshHolderCountsOnce(): Promise<void> {
     // Not configured — skip silently rather than spamming errors every cycle.
     return;
   }
-  if (latestLiveAddresses.length === 0) return;
+  if (latestPrioritizedAddresses.length === 0) return;
 
   holderRefreshInFlight = true;
   const startedAt = Date.now();
   try {
-    const cached = await getCachedHolderCounts(ROBINHOOD_CHAIN_ID, latestLiveAddresses);
-    const stale = selectStaleAddresses(latestLiveAddresses, cached, HOLDER_REFRESH_INTERVAL_MS).slice(
+    const cached = await getCachedHolderCounts(ROBINHOOD_CHAIN_ID, latestPrioritizedAddresses);
+    // selectStaleAddresses() only filters staleness — it doesn't sort, so
+    // the market-cap/volume ordering from latestPrioritizedAddresses is
+    // preserved through the slice below.
+    const stale = selectStaleAddresses(latestPrioritizedAddresses, cached, HOLDER_REFRESH_INTERVAL_MS).slice(
       0,
       HOLDER_REFRESH_BATCH_SIZE,
     );
     if (stale.length === 0) return;
+
+    // Small inter-call delay between tokens so bursts of Alchemy
+    // alchemy_getAssetTransfers calls stay well under rate-limit thresholds.
+    const INTER_TOKEN_DELAY_MS = 300;
 
     let ok = 0;
     for (const address of stale) {
@@ -92,6 +120,9 @@ async function refreshHolderCountsOnce(): Promise<void> {
       } catch (err) {
         console.error(`[worker] holder-count refresh failed for ${address}:`, (err as Error).message);
       }
+      // Throttle regardless of success/failure so a run of errors doesn't
+      // collapse the inter-call gap to zero.
+      await new Promise((r) => setTimeout(r, INTER_TOKEN_DELAY_MS));
     }
     console.log(
       `[worker] refreshed holder counts for ${ok}/${stale.length} tokens in ${Date.now() - startedAt}ms`,
@@ -120,6 +151,19 @@ async function main() {
   }
 
   await pollOnce();
+
+  // Log a concrete time estimate for how long a full first holder-count pass
+  // will take, so it's visible in production logs whenever the worker restarts.
+  if (latestPrioritizedAddresses.length > 0) {
+    const cycles = Math.ceil(latestPrioritizedAddresses.length / HOLDER_REFRESH_BATCH_SIZE);
+    const estimateMinutes = Math.ceil((cycles * HOLDER_REFRESH_INTERVAL_MS) / 60_000);
+    console.log(
+      `[worker] holder-count estimate: ${latestPrioritizedAddresses.length} tokens / ${HOLDER_REFRESH_BATCH_SIZE} per cycle` +
+      ` / every ${HOLDER_REFRESH_INTERVAL_MS / 1000}s ≈ ${cycles} cycles ≈ ${estimateMinutes} min for first full pass` +
+      ` (tokens ordered by market cap desc — highest-value tokens get counts first)`,
+    );
+  }
+
   const timer = setInterval(() => {
     if (!stopping) void pollOnce();
   }, POLL_INTERVAL_MS);
@@ -128,7 +172,7 @@ async function main() {
     if (!stopping) void refreshHolderCountsOnce();
   }, HOLDER_REFRESH_INTERVAL_MS);
   // Kick off an initial refresh shortly after the first poll populates
-  // latestLiveAddresses, rather than waiting a full interval.
+  // latestPrioritizedAddresses, rather than waiting a full interval.
   setTimeout(() => void refreshHolderCountsOnce(), 15_000);
 
   const shutdown = (signal: string) => {

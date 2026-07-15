@@ -31,8 +31,9 @@ export async function GET(
       return {};
     });
     const holderCount = holderCounts[data.token.address.toLowerCase()]?.holder_count ?? null;
+    const holderUpdatedAt = holderCounts[data.token.address.toLowerCase()]?.computed_at ?? null;
 
-    return NextResponse.json({ ...data, token: { ...data.token, holderCount } });
+    return NextResponse.json({ ...data, token: { ...data.token, holderCount, holderUpdatedAt } });
   } catch (err) {
     console.error("[/api/token/:chain/:address]", err);
     return NextResponse.json(

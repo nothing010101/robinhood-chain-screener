@@ -206,7 +206,13 @@ export default function TokenDetailPage() {
             {t.detail.dexPaid}: {detail.dexPaid ? t.detail.dexPaidYes : t.detail.dexPaidNo}
           </span>
           <span>
-            {t.columns.holders}: {token.holderCount != null ? token.holderCount.toLocaleString() : t.holdersUnavailable}
+            {t.columns.holders}:{" "}
+            {token.holderCount != null ? token.holderCount.toLocaleString() : t.holdersUnavailable}
+            {token.holderCount != null && token.holderUpdatedAt && (
+              <span className="ml-1 text-muted/70">
+                ({t.holdersAsOf.replace("{t}", formatRelativeTime(token.holderUpdatedAt))})
+              </span>
+            )}
           </span>
           <span>
             {t.columns.created}: {formatRelativeTime(token.createDate)}
