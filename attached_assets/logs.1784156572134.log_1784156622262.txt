@@ -1,0 +1,134 @@
+2026-07-15T23:00:49.093745551Z [inf]  scheduling build on Metal builder "builder-pbpcur"
+2026-07-15T23:00:50.747553191Z [inf]  fetched snapshot sha256:773ba498d334a8454a8f67a1a1edae1f3edcba5de96991a63ec3912ae7bafa2d (2.2 MB bytes)
+2026-07-15T23:00:50.747576195Z [inf]  fetching snapshot
+2026-07-15T23:00:51.135735747Z [inf]  unpacking archive
+2026-07-15T23:00:51.609952910Z [inf]  using build driver nixpacks-v1.41.0
+2026-07-15T23:00:52.273560452Z [inf]  
+2026-07-15T23:00:52.273570647Z [inf]  ╔══════════════════════════════ Nixpacks v1.41.0 ══════════════════════════════╗
+2026-07-15T23:00:52.273573542Z [inf]  ║ setup      │ nodejs_22, pnpm-9_x, openssl                                    ║
+2026-07-15T23:00:52.273581924Z [inf]  ║──────────────────────────────────────────────────────────────────────────────║
+2026-07-15T23:00:52.273583026Z [inf]  ║ install    │ npm install -g pnpm@10.26.1 && pnpm install --no-frozen-        ║
+2026-07-15T23:00:52.273583777Z [inf]  ║            │ lockfile                                                        ║
+2026-07-15T23:00:52.273585169Z [inf]  ║──────────────────────────────────────────────────────────────────────────────║
+2026-07-15T23:00:52.273588725Z [inf]  ║ build      │ true                                                            ║
+2026-07-15T23:00:52.273590056Z [inf]  ║──────────────────────────────────────────────────────────────────────────────║
+2026-07-15T23:00:52.273590838Z [inf]  ║ start      │ pnpm --filter @workspace/worker run start                       ║
+2026-07-15T23:00:52.273592120Z [inf]  ╚══════════════════════════════════════════════════════════════════════════════╝
+2026-07-15T23:00:52.273592760Z [inf]  
+2026-07-15T23:00:52.273929997Z [inf]  
+2026-07-15T23:00:52.273932080Z [inf]  Saved output to:
+2026-07-15T23:00:52.273933852Z [inf]    snapshot-target-unpack
+2026-07-15T23:00:52.755571438Z [inf]  [internal] load build definition from Dockerfile
+2026-07-15T23:00:52.755754783Z [inf]  [internal] load build definition from Dockerfile
+2026-07-15T23:00:52.755854242Z [inf]  [internal] load build definition from Dockerfile
+2026-07-15T23:00:52.781565940Z [inf]  [internal] load build definition from Dockerfile
+2026-07-15T23:00:52.790289008Z [inf]  [internal] load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+2026-07-15T23:00:59.459866558Z [inf]  [internal] load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+2026-07-15T23:00:59.460790275Z [inf]  [internal] load .dockerignore
+2026-07-15T23:00:59.460899749Z [inf]  [internal] load .dockerignore
+2026-07-15T23:00:59.461124196Z [inf]  [internal] load .dockerignore
+2026-07-15T23:00:59.488900421Z [inf]  [internal] load .dockerignore
+2026-07-15T23:00:59.497201085Z [wrn]  SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "SUPABASE_SERVICE_ROLE_KEY") (line 11)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+
+2026-07-15T23:00:59.497657400Z [wrn]  SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "SUPABASE_SERVICE_ROLE_KEY") (line 12)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+
+2026-07-15T23:00:59.497688957Z [wrn]  UndefinedVar: Usage of undefined variable '$NIXPACKS_PATH' (line 18)(https://docs.docker.com/go/dockerfile/rule/undefined-var/)
+ details: Variables should be defined before their use
+
+2026-07-15T23:00:59.501764362Z [inf]  [stage-0 10/10] COPY . /app
+2026-07-15T23:00:59.501766124Z [inf]  [stage-0  9/10] RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+2026-07-15T23:00:59.501766926Z [inf]  [stage-0  8/10] RUN --mount=type=cache,id=s/e9636e44-c6f1-47c5-ae93-50abcd53d654-apps/token-screener/next/cache,target=/app/apps/token-screener/.next/cache --mount=type=cache,id=s/e9636e44-c6f1-47c5-ae93-50abcd53d654-node_modules/cache,target=/app/node_modules/.cache true
+2026-07-15T23:00:59.501767667Z [inf]  [stage-0  7/10] COPY . /app/.
+2026-07-15T23:00:59.501768498Z [inf]  [stage-0  6/10] RUN --mount=type=cache,id=s/e9636e44-c6f1-47c5-ae93-50abcd53d654-/root/local/share/pnpm/store/v3,target=/root/.local/share/pnpm/store/v3 npm install -g pnpm@10.26.1 && pnpm install --no-frozen-lockfile
+2026-07-15T23:00:59.501771172Z [inf]  [stage-0  5/10] COPY . /app/.
+2026-07-15T23:00:59.501772554Z [inf]  [stage-0  4/10] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+2026-07-15T23:00:59.501774567Z [inf]  [stage-0  3/10] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+2026-07-15T23:00:59.501775558Z [inf]  [internal] load build context
+2026-07-15T23:00:59.501776480Z [inf]  [stage-0  2/10] WORKDIR /app/
+2026-07-15T23:00:59.501777261Z [inf]  [stage-0  1/10] FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+2026-07-15T23:00:59.502012494Z [inf]  [stage-0  1/10] FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+2026-07-15T23:00:59.502014657Z [inf]  [internal] load build context
+2026-07-15T23:00:59.502330551Z [inf]  [internal] load build context
+2026-07-15T23:00:59.515243466Z [inf]  [stage-0  1/10] FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+2026-07-15T23:00:59.608149592Z [inf]  [internal] load build context
+2026-07-15T23:00:59.625375106Z [inf]  [stage-0  2/10] WORKDIR /app/
+2026-07-15T23:00:59.625377320Z [inf]  [stage-0  3/10] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+2026-07-15T23:00:59.625378632Z [inf]  [stage-0  4/10] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+2026-07-15T23:00:59.625387255Z [inf]  [stage-0  5/10] COPY . /app/.
+2026-07-15T23:00:59.742736214Z [inf]  [stage-0  5/10] COPY . /app/.
+2026-07-15T23:00:59.751978061Z [inf]  [stage-0  6/10] RUN --mount=type=cache,id=s/e9636e44-c6f1-47c5-ae93-50abcd53d654-/root/local/share/pnpm/store/v3,target=/root/.local/share/pnpm/store/v3 npm install -g pnpm@10.26.1 && pnpm install --no-frozen-lockfile
+2026-07-15T23:01:02.581533387Z [inf]  
+added 1 package in 2s
+
+2026-07-15T23:01:02.581569341Z [inf]  
+1 package is looking for funding
+  run `npm fund` for details
+
+2026-07-15T23:01:03.137375259Z [inf]  Scope: all 12 workspace projects
+
+2026-07-15T23:01:03.336229518Z [inf]  Progress: resolved 0, reused 1, downloaded 0, added 0
+
+2026-07-15T23:01:03.468137893Z [inf]  artifacts/mockup-sandbox                 |  WARN  deprecated recharts@2.15.4
+
+2026-07-15T23:01:03.470260607Z [inf]  apps/token-screener                      |  WARN  deprecated eslint@8.57.1
+
+2026-07-15T23:01:04.372669105Z [inf]  Progress: resolved 704, reused 700, downloaded 0, added 0
+
+2026-07-15T23:01:05.37411593Z [inf]  Progress: resolved 953, reused 787, downloaded 0, added 0
+
+2026-07-15T23:01:05.839459698Z [inf]   WARN  8 deprecated subdependencies found: @esbuild-kit/core-utils@3.3.2, @esbuild-kit/esm-loader@2.6.5, @humanwhocodes/config-array@0.13.0, @humanwhocodes/object-schema@2.0.3, glob@10.3.10, glob@7.2.3, inflight@1.0.6, rimraf@3.0.2
+
+2026-07-15T23:01:05.869330536Z [inf]  Packages: +782
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+2026-07-15T23:01:06.374431997Z [inf]  Progress: resolved 953, reused 787, downloaded 0, added 436
+
+2026-07-15T23:01:07.375462236Z [inf]  Progress: resolved 953, reused 787, downloaded 0, added 693
+
+2026-07-15T23:01:08.376506937Z [inf]  Progress: resolved 953, reused 787, downloaded 0, added 776
+
+2026-07-15T23:01:09.377296916Z [inf]  Progress: resolved 953, reused 787, downloaded 0, added 779
+
+2026-07-15T23:01:10.283125656Z [inf]  Progress: resolved 953, reused 787, downloaded 0, added 782, done
+
+2026-07-15T23:01:12.02335863Z [inf]  . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+
+2026-07-15T23:01:12.05670359Z [inf]  . preinstall: Done
+
+2026-07-15T23:01:12.178854965Z [inf]  
+dependencies:
++ @replit/connectors-sdk 0.4.1
+
+devDependencies:
++ prettier 3.9.5
++ typescript 5.9.3 (7.0.2 is available)
+
+
+2026-07-15T23:01:12.18139113Z [inf]   WARN  Issues with peer dependencies found
+artifacts/api-server
+└─┬ esbuild-plugin-pino 2.3.3
+  └── ✕ unmet peer esbuild@">=0.25.0 <=0.25.8": found 0.27.3
+
+
+2026-07-15T23:01:12.28449708Z [inf]  Done in 9.6s using pnpm v9.15.9
+
+2026-07-15T23:01:12.593656922Z [inf]  [stage-0  6/10] RUN --mount=type=cache,id=s/e9636e44-c6f1-47c5-ae93-50abcd53d654-/root/local/share/pnpm/store/v3,target=/root/.local/share/pnpm/store/v3 npm install -g pnpm@10.26.1 && pnpm install --no-frozen-lockfile
+2026-07-15T23:01:12.605128874Z [inf]  [stage-0  7/10] COPY . /app/.
+2026-07-15T23:01:13.081796693Z [inf]  [stage-0  7/10] COPY . /app/.
+2026-07-15T23:01:13.092732852Z [inf]  [stage-0  8/10] RUN --mount=type=cache,id=s/e9636e44-c6f1-47c5-ae93-50abcd53d654-apps/token-screener/next/cache,target=/app/apps/token-screener/.next/cache --mount=type=cache,id=s/e9636e44-c6f1-47c5-ae93-50abcd53d654-node_modules/cache,target=/app/node_modules/.cache true
+2026-07-15T23:01:13.313451006Z [inf]  [stage-0  8/10] RUN --mount=type=cache,id=s/e9636e44-c6f1-47c5-ae93-50abcd53d654-apps/token-screener/next/cache,target=/app/apps/token-screener/.next/cache --mount=type=cache,id=s/e9636e44-c6f1-47c5-ae93-50abcd53d654-node_modules/cache,target=/app/node_modules/.cache true
+2026-07-15T23:01:13.325004130Z [inf]  [stage-0  9/10] RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+2026-07-15T23:01:13.638881539Z [inf]  [stage-0  9/10] RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+2026-07-15T23:01:13.647800952Z [inf]  [stage-0 10/10] COPY . /app
+2026-07-15T23:01:13.897857956Z [inf]  [stage-0 10/10] COPY . /app
+2026-07-15T23:01:13.908705672Z [inf]  exporting to docker image format
+2026-07-15T23:01:26.050458748Z [inf]  exporting to docker image format
+2026-07-15T23:01:26.095529342Z [inf]  containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6MDNlNmQzM2VkZDZkMjg5ODUyNGExNDc0ZmI0NjMxNDRiM2Q2YTc0ZDkxOTNkMjdkYWIwZDVlMTcxYTg3NjUxZiIsInNpemUiOjI3NjQsImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNy0xNVQyMzowMToyM1oifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+2026-07-15T23:01:26.095535331Z [inf]  containerimage.config.digest: sha256:40ae81ff1438fb2a50ffc39d85afafb93603de9ca6f6623a9c3d8b89e80514dc
+2026-07-15T23:01:26.095539918Z [inf]  containerimage.digest: sha256:03e6d33edd6d2898524a1474fb463144b3d6a74d9193d27dab0d5e171a87651f
+2026-07-15T23:01:37.168462759Z [inf]  image push
+2026-07-15T23:01:47.802479718Z [inf]  image push
+2026-07-15T23:02:03.960818814Z [inf]  image push
+2026-07-15T23:02:03.960836721Z [inf]  image push
