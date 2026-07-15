@@ -56,6 +56,7 @@ export async function getLiveTokens(
   sort: SortKey = "marketCap",
   order: SortOrder = "desc",
   search = "",
+  limit?: number,          // when set, fetch exactly this many rows (one request, no pagination)
 ): Promise<TokenRow[]> {
   const url  = process.env.SUPABASE_URL_PROJECT ?? "";
   const key  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -84,14 +85,14 @@ export async function getLiveTokens(
   const PAGE = 1000; // Supabase free-tier max-rows cap per request
 
   // Fetch a single range page from Supabase REST.
-  async function fetchRange(from: number): Promise<TokenRow[]> {
+  async function fetchRange(from: number, size = PAGE): Promise<TokenRow[]> {
     const res = await fetch(base, {
       headers: {
         apikey:         key,
         Authorization:  `Bearer ${key}`,
         "Content-Type": "application/json",
         // PostgREST Range header for offset pagination.
-        "Range":        `${from}-${from + PAGE - 1}`,
+        "Range":        `${from}-${from + size - 1}`,
         "Range-Unit":   "items",
       },
     });
@@ -104,6 +105,9 @@ export async function getLiveTokens(
     }
     return (await res.json() as TokenRow[]) ?? [];
   }
+
+  // When a limit is given, fetch exactly that many rows in one request.
+  if (limit != null) return fetchRange(0, limit);
 
   // First page — always fetched.
   const first = await fetchRange(0);

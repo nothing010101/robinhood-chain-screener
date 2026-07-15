@@ -6,12 +6,10 @@ import { TokenTable } from "@/components/TokenTable";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import type { ApeStoreTokenListItem } from "@/lib/apestore";
 
-// Architecture: fetch ALL tokens from Supabase once on mount (and every 30s
-// for freshness), store in state, then sort/filter entirely in JS memory.
-//
-// This gives instant sort switching (<5ms) instead of a Supabase round-trip
-// on every tab click. The initial load is ~1.5s (4 parallel Supabase Range
-// requests for ~3 000 tokens). Subsequent sort changes cost zero network.
+// Architecture: fetch the 100 newest live tokens from Supabase on mount and
+// every 30 s. The API always returns the 100 most-recently-launched tokens
+// (sorted by deploy_date DESC) so the screener stays focused on new activity.
+// Sorting / filtering is done client-side for instant (<5ms) tab switching.
 
 const STALE_MS = 30_000; // re-fetch when data is older than this
 
