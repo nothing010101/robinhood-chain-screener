@@ -1,0 +1,17 @@
+3 hal yang perlu dibenerin, urutkan sesuai nomor:
+
+1. [Landing page — PALING PENTING duluan] Halaman coming-soon di artifacts/coming-soon sekarang isinya buatan sendiri yang kosong/generic — SALAH. Landing page yang benar sudah ada, kodenya di repo GitHub terpisah bernama "landingpage" (repo lain, bukan bagian dari monorepo ini). Sebelum lanjut apapun:
+   a. Akses repo "landingpage" itu (pakai GITHUB_TOKEN yang ada di Secrets, cari nama repo yang persis di akun GitHub saya).
+   b. Ambil isi index.html dan ape.png dari repo itu, ganti TOTAL isi artifacts/coming-soon dengan konten itu (bukan digabung/dicampur dengan yang sudah dibuat sendiri — replace penuh).
+   c. Tambahkan tombol "Enter App" yang mengarah ke URL production token-screener (env var, jangan hardcode) — ini satu-satunya penambahan baru yang boleh dilakukan di atas landing page asli itu.
+   d. Jangan ubah desain/warna/copy apapun dari landing page asli selain menambahkan tombol itu.
+
+2. Tidak semua token dari ape.store ke-fetch (masih kurang dari total sebenarnya). Cek response endpoint list token: kemungkinan ada pagination (field seperti "total", "hasMore", "nextCursor", atau parameter page/offset yang belum di-loop). Perbaiki fetch logic (worker dan/atau app) supaya loop ambil SEMUA halaman sampai habis. Laporkan angka: total token yang seharusnya ada vs yang berhasil ke-fetch, sebelum dan sesudah fix.
+
+3. Holder count semua N/A. Implementasikan sebagai proses batch terpisah di apps/worker (BUKAN real-time per-request):
+   a. Hitung holder count per token pakai Alchemy (getAssetTransfers atau eth_getLogs untuk event Transfer kontrak token), simpan ke kolom baru holder_count + holder_updated_at di tabel tokens.
+   b. Jalankan dengan jeda antar token (hindari rate limit Alchemy), prioritaskan token volume/MC tertinggi dulu.
+   c. UI tampilkan dari Supabase (bukan live fetch), boleh kasih label kecil "as of [waktu]".
+   d. Laporkan estimasi waktu realistis untuk proses semua token yang ada (jumlahnya tergantung hasil fix poin 2).
+
+Kerjakan urut 1 → 2 → 3. Setelah SETIAP poin selesai, jalankan git add, commit, push ke main, DAN pastikan Vercel production ter-redeploy sebelum lapor selesai — jangan anggap selesai kalau belum ke-push dan ke-deploy.

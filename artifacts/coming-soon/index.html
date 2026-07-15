@@ -1,24 +1,493 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>ApeScreener — Coming Soon</title>
-    <meta name="description" content="ApeScreener is launching soon — live token screener for ape.store on Robinhood Chain." />
-    <meta name="robots" content="index, follow" />
-    <meta property="og:title" content="ApeScreener — Coming Soon" />
-    <meta property="og:description" content="ApeScreener is launching soon — live token screener for ape.store on Robinhood Chain." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="ApeScreener — Coming Soon" />
-    <meta name="twitter:description" content="ApeScreener is launching soon — live token screener for ape.store on Robinhood Chain." />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ape Screener — Coming Soon</title>
+<meta name="description" content="A real-time screener for tokens launched on ape.store, Robinhood Chain. Market cap, volume, and wallet-manipulation warnings in one terminal.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0B0D08;
+    --panel:#15130C;
+    --banana:#FFC72C;
+    --amber:#FF9F1C;
+    --peel:#4A5A23;
+    --paper:#F3EED9;
+    --paper-dim:#A8A290;
+    --line:#2A2717;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--void);
+    color:var(--paper);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+
+  a{color:inherit;}
+
+  .display{
+    font-family:'Archivo Black', sans-serif;
+    letter-spacing:-0.02em;
+  }
+
+  .mono{
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  /* ---------- Background texture ---------- */
+  .grain{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    opacity:0.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- Nav ---------- */
+  header{
+    position:relative;
+    z-index:5;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:28px 6vw;
+  }
+
+  .wordmark{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:18px;
+    letter-spacing:0.02em;
+  }
+
+  .wordmark .dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--banana);
+    box-shadow:0 0 12px var(--banana);
+    animation:pulse 2.2s ease-in-out infinite;
+  }
+
+  @keyframes pulse{
+    0%,100%{opacity:1;}
+    50%{opacity:0.35;}
+  }
+
+  .chain-tag{
+    font-size:12px;
+    color:var(--paper-dim);
+    border:1px solid var(--line);
+    padding:6px 12px;
+    border-radius:999px;
+    letter-spacing:0.04em;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    position:relative;
+    z-index:2;
+    min-height:88vh;
+    display:flex;
+    align-items:center;
+    padding:0 6vw;
+    gap:60px;
+  }
+
+  .hero-copy{
+    flex:1;
+    max-width:640px;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--banana);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    margin-bottom:22px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .eyebrow::before{
+    content:"";
+    width:22px;
+    height:1px;
+    background:var(--banana);
+  }
+
+  .hero h1{
+    font-size:clamp(48px, 7vw, 92px);
+    line-height:0.96;
+    color:var(--paper);
+  }
+
+  .hero h1 span{
+    color:var(--banana);
+    -webkit-text-stroke:1.5px var(--banana);
+  }
+
+  .hero p{
+    margin-top:26px;
+    font-size:18px;
+    color:var(--paper-dim);
+    max-width:480px;
+  }
+
+  .hero-actions{
+    margin-top:40px;
+    display:flex;
+    align-items:center;
+    gap:22px;
+  }
+
+  .notify-form{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:2px;
+    overflow:hidden;
+  }
+
+  .notify-form input{
+    background:transparent;
+    border:none;
+    padding:14px 16px;
+    color:var(--paper);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    width:220px;
+  }
+
+  .notify-form input:focus{
+    outline:none;
+    background:rgba(255,199,44,0.06);
+  }
+
+  .notify-form input::placeholder{
+    color:var(--paper-dim);
+  }
+
+  .notify-form button{
+    background:var(--banana);
+    color:var(--void);
+    border:none;
+    padding:14px 22px;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.04em;
+    cursor:pointer;
+    transition:background 0.15s ease;
+  }
+
+  .notify-form button:hover{
+    background:var(--amber);
+  }
+
+  .notify-form button:focus-visible,
+  .icon-link:focus-visible,
+  .notify-form input:focus-visible{
+    outline:2px solid var(--banana);
+    outline-offset:2px;
+  }
+
+  .socials{
+    display:flex;
+    gap:14px;
+  }
+
+  .icon-link{
+    width:44px;height:44px;
+    border:1px solid var(--line);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color 0.15s ease, transform 0.15s ease;
+  }
+
+  .icon-link:hover{
+    border-color:var(--banana);
+    transform:translateY(-2px);
+  }
+
+  .icon-link svg{width:18px;height:18px;fill:var(--paper);}
+
+  /* ---------- Hero visual ---------- */
+  .hero-visual{
+    flex:0 0 auto;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .banana-frame{
+    position:relative;
+    width:min(360px, 34vw);
+    padding:34px;
+    border:1px solid var(--line);
+    background:linear-gradient(160deg, var(--panel), #0E0C07);
+    transform:rotate(4deg);
+  }
+
+  .banana-frame::before{
+    content:"MC $—.—";
+    position:absolute;
+    top:-14px;left:20px;
+    background:var(--void);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--paper-dim);
+    padding:2px 10px;
+    border:1px solid var(--line);
+  }
+
+  .banana-frame img{
+    width:100%;
+    display:block;
+    filter:drop-shadow(0 20px 40px rgba(255,199,44,0.12));
+  }
+
+  /* ---------- About ---------- */
+  .section{
+    position:relative;
+    z-index:2;
+    padding:120px 6vw;
+    max-width:1100px;
+    margin:0 auto;
+  }
+
+  .section-head{
+    margin-bottom:56px;
+    max-width:620px;
+  }
+
+  .section-head .eyebrow{margin-bottom:18px;}
+
+  .section-head h2{
+    font-size:clamp(30px,4vw,44px);
+    color:var(--paper);
+  }
+
+  .section-head p{
+    margin-top:18px;
+    color:var(--paper-dim);
+    font-size:16px;
+    max-width:520px;
+  }
+
+  .feature-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px,1fr));
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+
+  .feature{
+    background:var(--void);
+    padding:32px 28px;
+  }
+
+  .feature .tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--banana);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    display:inline-block;
+    margin-bottom:16px;
+  }
+
+  .feature h3{
+    font-size:19px;
+    margin-bottom:10px;
+    color:var(--paper);
+  }
+
+  .feature p{
+    font-size:14.5px;
+    color:var(--paper-dim);
+  }
+
+  /* ---------- Footer ---------- */
+  footer{
+    position:relative;
+    z-index:2;
+    border-top:1px solid var(--line);
+    padding:36px 6vw;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--paper-dim);
+  }
+
+  footer .socials{gap:10px;}
+  footer .icon-link{width:34px;height:34px;}
+  footer .icon-link svg{width:14px;height:14px;}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 860px){
+    .hero{flex-direction:column-reverse;text-align:center;padding-top:60px;gap:40px;}
+    .hero-copy{max-width:100%;}
+    .hero p{margin-left:auto;margin-right:auto;}
+    .eyebrow{justify-content:center;}
+    .hero-actions{flex-direction:column;align-items:center;}
+    .notify-form{width:100%;max-width:360px;}
+    .notify-form input{width:100%;}
+    footer{flex-direction:column;gap:16px;text-align:center;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .wordmark .dot{animation:none;}
+  }
+
+  /* ---------- Added: Enter App button ----------
+     The only addition on top of the original landing page design, per request.
+     Scoped to new classes only; no existing rule above is modified. */
+  .nav-right{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+
+  .enter-app-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--banana);
+    color:var(--void);
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    padding:9px 16px;
+    border-radius:999px;
+    text-decoration:none;
+    transition:background 0.15s ease, transform 0.15s ease;
+  }
+
+  .enter-app-btn:hover{
+    background:var(--amber);
+    transform:translateY(-1px);
+  }
+
+  .enter-app-btn:focus-visible{
+    outline:2px solid var(--banana);
+    outline-offset:2px;
+  }
+
+  @media (max-width: 500px){
+    .nav-right{gap:8px;}
+    .chain-tag{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+
+<header>
+  <div class="wordmark display">
+    <span class="dot"></span>
+    APE SCREENER
+  </div>
+  <div class="nav-right">
+    <div class="chain-tag mono">CHAIN: ROBINHOOD · #4663</div>
+    <a href="%VITE_APP_URL%" class="enter-app-btn mono">Enter App →</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-copy">
+    <div class="eyebrow">Launching soon on ape.store</div>
+    <h1 class="display">SEE THE<br>ORCHARD<br>BEFORE<br>YOU <span>APE.</span></h1>
+    <p>A live screener for every token launched on ape.store's Robinhood Chain — market cap, volume, and holders, refreshed in real time. Built to flag repeat dev wallets and bundled supply before you buy, not after.</p>
+    <div class="hero-actions">
+      <form class="notify-form" action="#" method="post">
+        <input type="email" placeholder="your@email.com" aria-label="Email for launch notice" required>
+        <button type="submit">Notify me</button>
+      </form>
+      <div class="socials">
+        <a href="https://x.com/apescreener_" class="icon-link" aria-label="Follow on X">
+          <svg viewBox="0 0 24 24"><path d="M14.05 10.24 22.53 0h-2.01l-7.36 8.89L7.29 0H0l8.88 13.34L0 24h2.01l7.78-9.39L16.71 24H24L14.05 10.24Zm-2.75 3.32-.9-1.32L2.9 1.56h3.09l5.8 8.5.9 1.32 7.54 11.05h-3.09l-6.15-9.02Z"/></svg>
+        </a>
+        <a href="#" class="icon-link" aria-label="Join Telegram">
+          <svg viewBox="0 0 24 24"><path d="M22.05 2.6 1.13 10.9c-1.42.58-1.41 1.38-.26 1.73l5.28 1.65 2.03 6.2c.24.68.12.95.84.95.55 0 .8-.25 1.1-.55l2.6-2.55 5.4 4.02c1 .55 1.71.27 1.96-.93l3.54-16.9c.36-1.47-.55-2.13-1.57-1.72Zm-13.6 12.4-1.44-4.6L18.8 5.3c.5-.3.96-.14.58.2L8.45 15Z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="banana-frame">
+      <img src="/ape.png" alt="Ape Screener banana mark">
+    </div>
+  </div>
+</section>
+
+<section class="section" id="about">
+  <div class="section-head">
+    <div class="eyebrow">What it does</div>
+    <h2 class="display">One screen. Every ape token. No blind spots.</h2>
+    <p>Ape Screener pulls every token on ape.store's Robinhood Chain deployment into one live board — sortable by volume, market cap, or name — with the wallet history most screeners don't show you.</p>
+  </div>
+  <div class="feature-grid">
+    <div class="feature">
+      <span class="tag mono">Live data</span>
+      <h3>Real-time market cap & volume</h3>
+      <p>Price, market cap, and trade volume refresh straight from chain data — no stale numbers.</p>
+    </div>
+    <div class="feature">
+      <span class="tag mono">Full profile</span>
+      <h3>Every link in one place</h3>
+      <p>Logo, description, website, X, and Telegram for each token, pulled the moment it deploys.</p>
+    </div>
+    <div class="feature">
+      <span class="tag mono">Sort & filter</span>
+      <h3>Find it your way</h3>
+      <p>Order the board by volume, market cap — high or low — or alphabetically, and search by name.</p>
+    </div>
+    <div class="feature">
+      <span class="tag mono">Dev tracking</span>
+      <h3>Repeat-launch warnings</h3>
+      <p>Flags a token's page when its deployer wallet has launched before, so history isn't hidden.</p>
+    </div>
+    <div class="feature">
+      <span class="tag mono">Wallet trace</span>
+      <h3>Funding source visibility</h3>
+      <p>Follows funds moved into a dev wallet before deployment, so the trail stays visible.</p>
+    </div>
+    <div class="feature">
+      <span class="tag mono">Bundle detection</span>
+      <h3>Supply manipulation flags</h3>
+      <p>Surfaces wallets that look like one holder splitting supply across addresses.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="mono">© 2026 APE SCREENER — BUILT ON ROBINHOOD CHAIN</span>
+  <div class="socials">
+    <a href="https://x.com/apescreener_" class="icon-link" aria-label="Follow on X">
+      <svg viewBox="0 0 24 24"><path d="M14.05 10.24 22.53 0h-2.01l-7.36 8.89L7.29 0H0l8.88 13.34L0 24h2.01l7.78-9.39L16.71 24H24L14.05 10.24Zm-2.75 3.32-.9-1.32L2.9 1.56h3.09l5.8 8.5.9 1.32 7.54 11.05h-3.09l-6.15-9.02Z"/></svg>
+    </a>
+    <a href="#" class="icon-link" aria-label="Join Telegram">
+      <svg viewBox="0 0 24 24"><path d="M22.05 2.6 1.13 10.9c-1.42.58-1.41 1.38-.26 1.73l5.28 1.65 2.03 6.2c.24.68.12.95.84.95.55 0 .8-.25 1.1-.55l2.6-2.55 5.4 4.02c1 .55 1.71.27 1.96-.93l3.54-16.9c.36-1.47-.55-2.13-1.57-1.72Zm-13.6 12.4-1.44-4.6L18.8 5.3c.5-.3.96-.14.58.2L8.45 15Z"/></svg>
+    </a>
+  </div>
+</footer>
+
+</body>
 </html>
