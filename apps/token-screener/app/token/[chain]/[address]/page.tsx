@@ -206,13 +206,15 @@ export default function TokenDetailPage() {
             {t.detail.dexPaid}: {detail.dexPaid ? t.detail.dexPaidYes : t.detail.dexPaidNo}
           </span>
           <span>
-            {t.columns.holders}: {t.holdersUnavailable}
+            {t.columns.holders}: {token.holderCount != null ? token.holderCount.toLocaleString() : t.holdersUnavailable}
           </span>
           <span>
             {t.columns.created}: {formatRelativeTime(token.createDate)}
           </span>
         </div>
-        <p className="mt-1 font-mono text-[11px] text-muted/70">{t.detail.holdersNote}</p>
+        {token.holderCount == null && (
+          <p className="mt-1 font-mono text-[11px] text-muted/70">{t.detail.holdersNote}</p>
+        )}
 
         <FundingTrace status={fundingStatus} trace={fundingTrace} funderFanOut={funderFanOut} />
 

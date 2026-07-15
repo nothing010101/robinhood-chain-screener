@@ -101,7 +101,9 @@ export function TokenTable({
               <td className="px-4 py-3 text-right font-mono tabular text-muted">
                 {item.volumeStat != null ? formatUsd(item.volumeStat.volumeUSD) : "—"}
               </td>
-              <td className="px-4 py-3 text-right font-mono tabular text-muted">{t.holdersUnavailable}</td>
+              <td className="px-4 py-3 text-right font-mono tabular text-muted">
+                {item.holderCount != null ? item.holderCount.toLocaleString() : t.holdersUnavailable}
+              </td>
               <td className="px-4 py-3 text-right font-mono tabular text-muted">
                 {formatRelativeTime(item.createDate)}
               </td>

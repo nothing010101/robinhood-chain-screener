@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchTokenDetail } from "@/lib/apestore";
 import { recordTokenLaunches } from "@/lib/walletLaunches";
+import { getCachedHolderCounts, type TokenHolderRow } from "@/lib/tokenHolders";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,18 @@ export async function GET(
     recordTokenLaunches([data.token]).catch((err) =>
       console.error("[/api/token/:chain/:address] recordTokenLaunches", err),
     );
-    return NextResponse.json(data);
+
+    // Same Alchemy-derived Supabase cache as /api/tokens — never computed
+    // live here.
+    const holderCounts: Record<string, TokenHolderRow> = await getCachedHolderCounts(chain, [
+      data.token.address,
+    ]).catch((err) => {
+      console.error("[/api/token/:chain/:address] getCachedHolderCounts", err);
+      return {};
+    });
+    const holderCount = holderCounts[data.token.address.toLowerCase()]?.holder_count ?? null;
+
+    return NextResponse.json({ ...data, token: { ...data.token, holderCount } });
   } catch (err) {
     console.error("[/api/token/:chain/:address]", err);
     return NextResponse.json(

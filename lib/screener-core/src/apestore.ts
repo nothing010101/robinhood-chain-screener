@@ -43,6 +43,11 @@ export interface ApeStoreTokenListItem {
     volume: number;
     volumeUSD: number;
   } | null;
+  // Not part of the raw ape.store response — merged in by
+  // /api/tokens and /api/token/:chain/:address from our Alchemy-derived
+  // Supabase cache (ape.store's own `holders` field is always 0 on this
+  // chain). `null` means we haven't computed it yet.
+  holderCount?: number | null;
 }
 
 export interface ApeStoreTokenListResponse {

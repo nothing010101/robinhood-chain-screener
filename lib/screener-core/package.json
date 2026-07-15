@@ -7,7 +7,9 @@
     ".": "./src/index.ts",
     "./apestore": "./src/apestore.ts",
     "./supabase": "./src/supabase.ts",
-    "./walletLaunches": "./src/walletLaunches.ts"
+    "./walletLaunches": "./src/walletLaunches.ts",
+    "./alchemy": "./src/alchemy.ts",
+    "./tokenHolders": "./src/tokenHolders.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
