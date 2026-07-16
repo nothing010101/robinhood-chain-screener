@@ -86,3 +86,12 @@ export async function getFunderFanOut(chain: number, funderAddress: string): Pro
   }
   return new Set((data ?? []).map((row) => row.to_address)).size;
 }
+
+// Returns true if this funder should be suppressed from the "coordinated
+// funding" warning — i.e. it is a known bridge/relayer or has a fan-out
+// large enough to be treated as shared infrastructure.
+export async function isSuppressedFunder(chain: number, funderAddress: string): Promise<boolean> {
+  const { isBridgeOrExchange } = await import("@/lib/bridgeWhitelist");
+  const fanOut = await getFunderFanOut(chain, funderAddress);
+  return isBridgeOrExchange(funderAddress, fanOut);
+}

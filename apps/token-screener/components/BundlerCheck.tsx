@@ -3,13 +3,20 @@
 import { useState } from "react";
 import { shortenAddress } from "@/lib/format";
 
+interface BuyerStatus {
+  address: string;
+  status: "holding" | "sold";
+}
+
 interface Bundle {
   funder: string;
-  buyers: string[];
+  buyers: BuyerStatus[];
+  suppressed: boolean;
 }
 
 interface BundlerResult {
   bundles: Bundle[];
+  suppressedCount: number;
   earlyBuyerCount: number;
 }
 
@@ -41,7 +48,7 @@ export function BundlerCheck({ chain, address }: { chain: string; address: strin
             Bundle Analysis
           </div>
           <p className="mt-0.5 font-mono text-[11px] text-muted/70">
-            Checks if early buyers share the same ETH funder — a signal of coordinated supply.
+            Checks early buyers for shared ETH funder + sell/hold status.
           </p>
         </div>
         {status !== "loading" && (
@@ -67,6 +74,11 @@ export function BundlerCheck({ chain, address }: { chain: string; address: strin
         <div className="mt-4 space-y-3">
           <div className="font-mono text-[11px] text-muted">
             Analysed {result.earlyBuyerCount} early buyer{result.earlyBuyerCount !== 1 ? "s" : ""}.
+            {result.suppressedCount > 0 && (
+              <span className="ml-2 text-muted/60">
+                ({result.suppressedCount} bridge/relay funder{result.suppressedCount !== 1 ? "s" : ""} hidden)
+              </span>
+            )}
           </div>
 
           {result.bundles.length === 0 ? (
@@ -79,34 +91,55 @@ export function BundlerCheck({ chain, address }: { chain: string; address: strin
               <div className="font-mono text-xs text-bear">
                 ⚠ {result.bundles.length} bundle group{result.bundles.length !== 1 ? "s" : ""} detected
               </div>
-              {result.bundles.map((bundle, i) => (
-                <div key={bundle.funder} className="rounded-md border border-bear/20 bg-bear/5 px-3 py-2.5">
-                  <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted mb-1.5">
-                    Group {i + 1} — shared funder
+              {result.bundles.map((bundle, i) => {
+                const soldCount    = bundle.buyers.filter((b) => b.status === "sold").length;
+                const holdingCount = bundle.buyers.filter((b) => b.status === "holding").length;
+                return (
+                  <div key={bundle.funder} className="rounded-md border border-bear/20 bg-bear/5 px-3 py-2.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">
+                        Group {i + 1} — shared funder
+                      </span>
+                      <div className="flex gap-2 font-mono text-[10px]">
+                        {holdingCount > 0 && (
+                          <span className="text-bear font-semibold">⚠ {holdingCount} holding</span>
+                        )}
+                        {soldCount > 0 && (
+                          <span className="text-muted">{soldCount} sold</span>
+                        )}
+                      </div>
+                    </div>
+                    <a
+                      href={`https://robinhoodchain.blockscout.com/address/${bundle.funder}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-xs text-acid hover:underline"
+                    >
+                      {shortenAddress(bundle.funder)}
+                    </a>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {bundle.buyers.map((buyer) => (
+                        <a
+                          key={buyer.address}
+                          href={`https://robinhoodchain.blockscout.com/address/${buyer.address}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`flex items-center gap-1 rounded px-2 py-0.5 font-mono text-[10px] hover:text-ink ${
+                            buyer.status === "sold"
+                              ? "bg-panel text-muted"
+                              : "bg-bear/10 text-bear"
+                          }`}
+                        >
+                          {shortenAddress(buyer.address)}
+                          <span className={buyer.status === "sold" ? "text-muted/60" : "text-bear"}>
+                            {buyer.status === "sold" ? "✓sold" : "⚠hold"}
+                          </span>
+                        </a>
+                      ))}
+                    </div>
                   </div>
-                  <a
-                    href={`https://robinhoodchain.blockscout.com/address/${bundle.funder}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-mono text-xs text-acid hover:underline"
-                  >
-                    {shortenAddress(bundle.funder)}
-                  </a>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {bundle.buyers.map((buyer) => (
-                      <a
-                        key={buyer}
-                        href={`https://robinhoodchain.blockscout.com/address/${buyer}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded bg-panel px-2 py-0.5 font-mono text-[10px] text-muted hover:text-ink"
-                      >
-                        {shortenAddress(buyer)}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

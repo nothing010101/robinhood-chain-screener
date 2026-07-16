@@ -69,6 +69,17 @@ export async function getEarliestIncomingTransfers(address: string, maxCount = 5
   return result.transfers ?? [];
 }
 
+// ERC-20 balanceOf(address) — single eth_call, very cheap on Alchemy quota.
+// Returns token balance as a JS number (safe for typical meme-coin supplies).
+export async function getTokenBalance(tokenAddress: string, walletAddress: string): Promise<number> {
+  const selector = "0x70a08231"; // balanceOf(address)
+  const padded = walletAddress.toLowerCase().replace("0x", "").padStart(64, "0");
+  const data = selector + padded;
+  const hex = await alchemyRpc<string>("eth_call", [{ to: tokenAddress, data }, "latest"]);
+  if (!hex || hex === "0x") return 0;
+  return Number(BigInt(hex));
+}
+
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 // Holder count fallback: ape.store's own `holders` field is always 0 on this
