@@ -1,0 +1,272 @@
+import { useEffect, useRef, useState } from "react";
+
+/**
+ * ApeScreener — Token Teaser Card (Animated)
+ * Drop into apescreener.store landing page (coming-soon).
+ *
+ * Add once, anywhere in your app (e.g. app/layout.jsx <head>):
+ * <link rel="preconnect" href="https://fonts.googleapis.com" />
+ * <link
+ *   href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Poppins:wght@700&family=IBM+Plex+Mono:wght@400;600&display=swap"
+ *   rel="stylesheet"
+ * />
+ *
+ * Signature moment: on mount, a gold scan line sweeps down the card like
+ * the screener "locking on" to a new token, content reveals in its wake,
+ * and the supply figure counts up from zero — echoing the product's
+ * real-time-scan identity instead of a generic fade-in.
+ */
+export default function TokenTeaserCard() {
+  const [scanDone, setScanDone] = useState(false);
+  const [supply, setSupply] = useState(0);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const scanTimer = setTimeout(() => setScanDone(true), 900);
+    return () => clearTimeout(scanTimer);
+  }, []);
+
+  useEffect(() => {
+    if (!scanDone) return;
+    const target = 1_000_000_000;
+    const duration = 1100;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setSupply(Math.floor(target * eased));
+      if (t < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [scanDone]);
+
+  return (
+    <div className={`apesc-card ${scanDone ? "is-scanned" : ""}`}>
+      <style>{`
+        .apesc-card {
+          --bg: #0B0D08;
+          --panel: #15130C;
+          --accent: #FFC72C;
+          --accent2: #FF9F1C;
+          --text: #F3EED9;
+          --dim: #A8A290;
+          --border: #2A2717;
+
+          background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          max-width: 460px;
+          padding: 28px 26px 24px;
+          color: var(--text);
+          font-family: 'Poppins', sans-serif;
+          position: relative;
+          overflow: hidden;
+          animation: apesc-glow 4s ease-in-out infinite;
+        }
+        @keyframes apesc-glow {
+          0%, 100% { box-shadow: 0 0 24px -8px rgba(255,199,44,0.08); }
+          50% { box-shadow: 0 0 34px -6px rgba(255,199,44,0.16); }
+        }
+        .apesc-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-image: repeating-linear-gradient(
+            0deg, transparent, transparent 3px, rgba(255,199,44,0.02) 3px, rgba(255,199,44,0.02) 4px
+          );
+          pointer-events: none;
+        }
+
+        /* --- signature: scan line sweep on mount --- */
+        .apesc-scanline {
+          position: absolute;
+          left: 0; right: 0;
+          height: 2px;
+          top: 0;
+          background: linear-gradient(90deg, transparent, var(--accent) 20%, var(--accent) 80%, transparent);
+          box-shadow: 0 0 12px 2px rgba(255,199,44,0.6);
+          animation: apesc-sweep 0.9s cubic-bezier(.4,0,.2,1) forwards;
+          z-index: 2;
+        }
+        @keyframes apesc-sweep {
+          0% { top: 0; opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+
+        .apesc-reveal {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        .is-scanned .apesc-reveal {
+          animation: apesc-in 0.5s ease-out forwards;
+        }
+        .is-scanned .apesc-reveal:nth-child(1) { animation-delay: 0s; }
+        .is-scanned .apesc-reveal:nth-child(2) { animation-delay: 0.08s; }
+        .is-scanned .apesc-reveal:nth-child(3) { animation-delay: 0.16s; }
+        .is-scanned .apesc-reveal:nth-child(4) { animation-delay: 0.24s; }
+        .is-scanned .apesc-reveal:nth-child(5) { animation-delay: 0.34s; }
+        .is-scanned .apesc-reveal:nth-child(6) { animation-delay: 0.42s; }
+        .is-scanned .apesc-reveal:nth-child(7) { animation-delay: 0.5s; }
+        @keyframes apesc-in {
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .apesc-eyebrow {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 12px;
+          letter-spacing: 0.12em;
+          color: var(--accent2);
+          text-transform: uppercase;
+        }
+        .apesc-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: var(--accent);
+          box-shadow: 0 0 0 3px rgba(255,199,44,0.15);
+          animation: apesc-blink 1.6s ease-in-out infinite;
+        }
+        @keyframes apesc-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.35; }
+        }
+        .apesc-ticker-title {
+          font-family: 'Archivo Black', sans-serif;
+          font-size: 15px;
+          letter-spacing: 0.04em;
+          color: var(--dim);
+          margin-top: 10px;
+        }
+        .apesc-headline {
+          font-family: 'Archivo Black', sans-serif;
+          font-size: 30px;
+          line-height: 1.15;
+          margin: 14px 0 6px;
+        }
+        .apesc-headline span {
+          color: var(--accent);
+        }
+        .apesc-sub {
+          font-size: 13.5px;
+          color: var(--dim);
+          line-height: 1.5;
+          margin-bottom: 18px;
+        }
+        .apesc-rule {
+          height: 1px;
+          background: var(--border);
+          margin: 16px 0;
+        }
+        .apesc-stats {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          margin-bottom: 18px;
+        }
+        .apesc-stat {
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          padding: 10px 8px;
+          text-align: left;
+          transition: border-color 0.3s ease;
+        }
+        .apesc-stat:hover {
+          border-color: var(--accent);
+        }
+        .apesc-stat-label {
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 9.5px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--dim);
+          margin-bottom: 4px;
+        }
+        .apesc-stat-value {
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--text);
+          font-variant-numeric: tabular-nums;
+        }
+        .apesc-mech {
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 11.5px;
+          color: var(--dim);
+          background: rgba(255,199,44,0.04);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          padding: 10px 12px;
+          line-height: 1.6;
+          margin-bottom: 18px;
+        }
+        .apesc-mech b {
+          color: var(--accent);
+          font-weight: 600;
+        }
+        .apesc-soon {
+          margin-top: 14px;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 11px;
+          color: var(--dim);
+          border-top: 1px dashed var(--border);
+          padding-top: 12px;
+          display: flex;
+          justify-content: space-between;
+        }
+        .apesc-soon b { color: var(--text); }
+      `}</style>
+
+      {!scanDone && <div className="apesc-scanline" />}
+
+      <div className="apesc-eyebrow apesc-reveal">
+        <span className="apesc-dot" />
+        <span>token status · live</span>
+      </div>
+
+      <div className="apesc-ticker-title apesc-reveal">
+        $TBA · ROBINHOOD CHAIN
+      </div>
+
+      <div className="apesc-headline apesc-reveal">
+        Hold. Get paid <span>in ETH.</span>
+      </div>
+      <div className="apesc-sub apesc-reveal">
+        A fair-launch token for ApeScreener. No presale, no team allocation —
+        every holder is eligible for weekly ETH rewards, funded directly by
+        protocol fee claims.
+      </div>
+
+      <div className="apesc-stats apesc-reveal">
+        <div className="apesc-stat">
+          <div className="apesc-stat-label">Ticker</div>
+          <div className="apesc-stat-value">TBA</div>
+        </div>
+        <div className="apesc-stat">
+          <div className="apesc-stat-label">Supply</div>
+          <div className="apesc-stat-value">{supply.toLocaleString("en-US")}</div>
+        </div>
+        <div className="apesc-stat">
+          <div className="apesc-stat-label">Launch</div>
+          <div className="apesc-stat-value">Fair launch</div>
+        </div>
+      </div>
+
+      <div className="apesc-mech apesc-reveal">
+        <b>Reward source:</b> Uniswap V3 LP fee claims<br />
+        <b>Distribution:</b> weekly, random snapshot of holders<br />
+        <b>Action required:</b> none — just hold
+      </div>
+
+      <div className="apesc-rule" />
+
+      <div className="apesc-soon apesc-reveal">
+        <span>next up</span>
+        <b>Screener Bot — coming soon</b>
+      </div>
+    </div>
+  );
+}
