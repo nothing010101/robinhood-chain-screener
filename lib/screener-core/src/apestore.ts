@@ -100,12 +100,10 @@ export interface ApeStoreTrade {
   bump: boolean;
 }
 
-async function apeFetch<T>(path: string, revalidateSeconds: number): Promise<T> {
+async function apeFetch<T>(path: string): Promise<T> {
   const res = await fetch(`${APESTORE_BASE}${path}`, {
     headers: { "User-Agent": "robinhood-screener/1.0" },
-    // `next.revalidate` is only meaningful inside a Next.js fetch cache; a
-    // plain Node process (the worker) simply ignores the extra field.
-    next: { revalidate: revalidateSeconds },
+    cache: "no-store",
   } as RequestInit);
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -133,7 +131,7 @@ export function fetchTokenList(params: {
     search: params.search ?? "",
     chain: String(params.chain ?? ROBINHOOD_CHAIN_ID),
   });
-  return apeFetch(`/api/tokens?${search.toString()}`, 15);
+  return apeFetch(`/api/tokens?${search.toString()}`);
 }
 
 // Fetch N pages from ape.store in parallel and return the combined list.
@@ -155,11 +153,11 @@ export async function fetchLiveTokenPages(
 }
 
 export function fetchTokenDetail(chain: number, address: string): Promise<ApeStoreTokenDetailResponse> {
-  return apeFetch(`/api/token/${chain}/${address}`, 15);
+  return apeFetch(`/api/token/${chain}/${address}`);
 }
 
 export function fetchTokenTrades(chain: number, address: string): Promise<ApeStoreTrade[]> {
-  return apeFetch(`/api/token/${chain}/${address}/trades`, 15);
+  return apeFetch(`/api/token/${chain}/${address}/trades`);
 }
 
 // Fetches every "live" page from ape.store for a chain in one shot. Used by
@@ -177,24 +175,23 @@ export function fetchTokenTrades(chain: number, address: string): Promise<ApeSto
 // until a page comes back with fewer than `pageSize` items (ape.store's
 // signal for "last page"), which is the only reliable end-of-list signal
 // this endpoint gives.
-const PAGE_FETCH_CONCURRENCY = 5;
-const MAX_PAGE_SAFETY_CAP = 1000; // hard stop so a misbehaving API can't loop forever
+const MAX_PAGE_SAFETY_CAP = 1000;
 
-export async function fetchAllLiveTokens(chain = ROBINHOOD_CHAIN_ID): Promise<ApeStoreTokenListItem[]> {
+export async function fetchAllLiveTokens(
+  chain = ROBINHOOD_CHAIN_ID,
+  concurrency = 5,
+): Promise<ApeStoreTokenListItem[]> {
   const first = await fetchTokenList({ page: 1, chain });
   const pageSize = first.items.length || 24;
 
   let all = first.items;
-  if (first.items.length < pageSize) {
-    // First page was already short/empty — nothing more to fetch.
-    return all;
-  }
+  if (first.items.length < pageSize) return all;
 
   let nextPage = 2;
   let reachedEnd = false;
 
   while (!reachedEnd && nextPage <= MAX_PAGE_SAFETY_CAP) {
-    const batchPages = Array.from({ length: PAGE_FETCH_CONCURRENCY }, (_, i) => nextPage + i);
+    const batchPages = Array.from({ length: concurrency }, (_, i) => nextPage + i);
     const batch = await Promise.all(batchPages.map((page) => fetchTokenList({ page, chain })));
 
     for (const page of batch) {
@@ -205,7 +202,7 @@ export async function fetchAllLiveTokens(chain = ROBINHOOD_CHAIN_ID): Promise<Ap
       }
     }
 
-    nextPage += PAGE_FETCH_CONCURRENCY;
+    nextPage += concurrency;
   }
 
   return all;
