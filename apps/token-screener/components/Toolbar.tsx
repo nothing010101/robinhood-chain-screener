@@ -35,7 +35,7 @@ export function Toolbar({
     <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between">
       <div className="flex flex-1 flex-col gap-2">
         <label className="text-[11px] uppercase tracking-[0.2em] text-muted">
-          📈 MC ≥ $5K · {t.resultCount.replace("{count}", String(resultCount))}
+          {t.resultCount.replace("{count}", String(resultCount))}
         </label>
         <input
           value={search}

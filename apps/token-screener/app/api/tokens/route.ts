@@ -10,7 +10,7 @@ export async function GET() {
     const tokens = await fetchLiveTokenPages(ROBINHOOD_CHAIN_ID, 15, "0");
 
     const result = tokens
-      .filter((t) => !t.isDead && t.marketCap >= 5_000)
+      .filter((t) => !t.isDead)
       .sort((a, b) => b.marketCap - a.marketCap);
 
     return NextResponse.json({ items: result, total: result.length });

@@ -208,6 +208,11 @@ export default function HomePage() {
         </div>
 
         {/* ── MC list ── */}
+        {/* MC list label */}
+        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-acid">
+          📈 Top tokens by market cap · live from ape.store
+        </p>
+
         <Toolbar
           search={search}
           onSearchChange={setSearch}
