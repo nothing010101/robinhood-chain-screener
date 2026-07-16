@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
-import { fetchLiveTokenPages, ROBINHOOD_CHAIN_ID } from "@/lib/apestore";
+import { fetchAllLiveTokens, ROBINHOOD_CHAIN_ID } from "@/lib/apestore";
 
 export const dynamic = "force-dynamic";
 
-// MC list: fetch 15 pages (360 tokens) directly from ape.store, no cache.
-// Users who want a token not in this list can search by CA.
+const MIN_MC = 7_000;
+
+// Fetch ALL live tokens from ape.store (concurrency=20, ~7s), filter MC >= $7K,
+// sort by MC desc. Tokens below $7K are only findable via CA search.
 export async function GET() {
   try {
-    const tokens = await fetchLiveTokenPages(ROBINHOOD_CHAIN_ID, 15, "0");
+    const tokens = await fetchAllLiveTokens(ROBINHOOD_CHAIN_ID, 20);
 
     const result = tokens
-      .filter((t) => !t.isDead)
+      .filter((t) => !t.isDead && t.marketCap >= MIN_MC)
       .sort((a, b) => b.marketCap - a.marketCap);
 
     return NextResponse.json({ items: result, total: result.length });

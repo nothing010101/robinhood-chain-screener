@@ -208,10 +208,15 @@ export default function HomePage() {
         </div>
 
         {/* ── MC list ── */}
-        {/* MC list label */}
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-acid">
-          📈 Top tokens by market cap · live from ape.store
-        </p>
+        {/* MC list label + info */}
+        <div className="mb-4 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-acid">
+            📈 Market Cap ≥ $7K · sorted highest first
+          </p>
+          <p className="rounded-md border border-line bg-panel px-3 py-1.5 font-mono text-[11px] text-muted">
+            💡 Token MC &lt; $7K? Search by contract address above to view info
+          </p>
+        </div>
 
         <Toolbar
           search={search}
