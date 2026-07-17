@@ -6,13 +6,18 @@
 // All addresses lowercase.
 
 export const BRIDGE_WHITELIST = new Set<string>([
-  // Relay Link — relayer/solver on Robinhood Chain
-  "0x1a2b9ef49d1cd4a24dc88f014d74fceada585efa", // Relay relayer (chain 4663)
-  "0xa5f565650890fba1824ee0f21ebbbf660a179934", // Relay solver #2
-  // Owlto Finance
+  // Confirmed bridge/relay addresses on Robinhood Chain (4663).
+  // Criteria: 250+ total outgoing transactions to many unique recipients.
+  // User-confirmed:
+  "0x56c262027e0de4aea31d2489529cb25d23e58a8b", // Relay / Coinbase bridge (user confirmed)
+  // High-volume relayers (250+ txs, confirmed via Blockscout):
+  "0xa67d7eb4dc68fa6ce8e34ef8cadaf075b9893fbb",
+  "0xada5bb90d0de0bd1b6f3938708f49295a8d1f7cb",
+  "0xabb2acd3be814a80e502575d6c1dc5f789e9cd10",
+  // Legacy placeholder entries (unconfirmed — keep until verified)
+  "0x1a2b9ef49d1cd4a24dc88f014d74fceada585efa",
+  "0xa5f565650890fba1824ee0f21ebbbf660a179934",
   "0x4d9b5c9c55e47b32b0a2c08e5d6e7f0f1a2b4c6e",
-  // Generic: any funder with very high fan-out is treated as a bridge/exchange
-  // regardless of whitelist — see getFunderFanOut threshold in walletTransfers.ts
 ]);
 
 // Fan-out threshold: a funder that has initialised this many or more distinct
