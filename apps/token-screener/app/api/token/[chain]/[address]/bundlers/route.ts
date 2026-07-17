@@ -32,14 +32,14 @@ async function fetchHoldPct(tokenAddress: string, walletAddress: string): Promis
     if (!hex || hex === "0x") return 0;
 
     const raw = BigInt(hex);
-    if (raw === 0n) return 0;
+    if (raw === BigInt(0)) return 0;
 
     // All ape.store tokens: 18 decimals, 1 000 000 000 total supply.
-    // Compute basis-points first (avoids float), then convert to %.
-    // pctBP = floor(raw * 1 000 000 / (1e9 * 1e18))  →  divide by 10 000 for %
-    const DENOM = 1_000_000_000n * (10n ** 18n);          // total supply in raw units
-    const bp    = (raw * 1_000_000n) / DENOM;              // basis-points × 100
-    return Number(bp) / 10_000;                            // → percent, 4 dp precision
+    // Use BigInt() constructor (not literals) for ES2017 compat.
+    // bp = floor(raw × 1e6 / 1e27) → divide by 10000 for %
+    const DENOM = BigInt("1000000000000000000000000000"); // 1e9 * 1e18 = 1e27
+    const bp    = (raw * BigInt("1000000")) / DENOM;
+    return Number(bp) / 10000;
   } catch {
     return -1;
   }

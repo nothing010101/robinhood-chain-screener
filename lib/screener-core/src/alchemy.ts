@@ -79,9 +79,8 @@ export async function getTokenBalance(tokenAddress: string, walletAddress: strin
   const hex = await alchemyRpc<string>("eth_call", [{ to: tokenAddress, data }, "latest"]);
   if (!hex || hex === "0x") return 0;
   const raw = BigInt(hex);
-  if (raw === 0n) return 0;
-  const DECIMALS = 10n ** 18n;
-  // Keep fractional part with enough precision for % display
+  if (raw === BigInt(0)) return 0;
+  const DECIMALS = BigInt("1000000000000000000"); // 10^18, no literal for ES compat
   const whole = Number(raw / DECIMALS);
   const frac  = Number(raw % DECIMALS) / 1e18;
   return whole + frac;
