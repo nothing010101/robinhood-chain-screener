@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ROBINHOOD_CHAIN_ID } from "@/lib/apestore";
 import { getFundingTrace, getFunderFanOut } from "@/lib/walletTransfers";
+import { isBridgeOrExchange } from "@/lib/bridgeWhitelist";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -21,7 +22,8 @@ export async function GET(
       return NextResponse.json({ trace: null, funderFanOut: 0 });
     }
     const funderFanOut = await getFunderFanOut(ROBINHOOD_CHAIN_ID, trace.from_address);
-    return NextResponse.json({ trace, funderFanOut });
+    const funderSuppressed = isBridgeOrExchange(trace.from_address, funderFanOut);
+    return NextResponse.json({ trace, funderFanOut, funderSuppressed });
   } catch (err) {
     console.error("[/api/wallet/:address/funding]", err);
     return NextResponse.json(

@@ -11,10 +11,12 @@ export function FundingTrace({
   status,
   trace,
   funderFanOut,
+  funderSuppressed = false,
 }: {
   status: "loading" | "ready" | "error";
   trace: FundingTraceData | null;
   funderFanOut: number;
+  funderSuppressed?: boolean;
 }) {
   const { t } = useLanguage();
 
@@ -58,7 +60,7 @@ export function FundingTrace({
         </div>
       )}
 
-      {status === "ready" && trace && funderFanOut > 1 && (
+      {status === "ready" && trace && funderFanOut > 1 && !funderSuppressed && (
         <div className="mt-2 rounded-md border border-bear/30 bg-bear/5 px-2.5 py-1.5 font-mono text-[11px] text-bear">
           ⚠ {t.funding.fanOut.replace("{count}", String(funderFanOut))}
         </div>

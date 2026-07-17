@@ -27,6 +27,7 @@ export default function TokenDetailPage() {
   const [launchesLoadingMore, setLaunchesLoadingMore] = useState(false);
   const [fundingTrace, setFundingTrace] = useState<FundingTraceData | null>(null);
   const [funderFanOut, setFunderFanOut] = useState(0);
+  const [funderSuppressed, setFunderSuppressed] = useState(false);
   const [fundingStatus, setFundingStatus] = useState<"loading" | "ready" | "error">("loading");
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "not_found">("loading");
   const [tradesStatus, setTradesStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -150,6 +151,7 @@ export default function TokenDetailPage() {
         if (data.error) throw new Error(data.error);
         setFundingTrace(data.trace ?? null);
         setFunderFanOut(data.funderFanOut ?? 0);
+        setFunderSuppressed(data.funderSuppressed ?? false);
         setFundingStatus("ready");
       })
       .catch((err) => {
@@ -280,7 +282,7 @@ export default function TokenDetailPage() {
 
         <BundlerCheck chain={String(token.chain)} address={token.address} />
 
-        <FundingTrace status={fundingStatus} trace={fundingTrace} funderFanOut={funderFanOut} />
+        <FundingTrace status={fundingStatus} trace={fundingTrace} funderFanOut={funderFanOut} funderSuppressed={funderSuppressed} />
 
         <DevWalletWarning
           chain={token.chain}
