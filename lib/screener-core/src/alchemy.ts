@@ -70,14 +70,21 @@ export async function getEarliestIncomingTransfers(address: string, maxCount = 5
 }
 
 // ERC-20 balanceOf(address) — single eth_call, very cheap on Alchemy quota.
-// Returns token balance as a JS number (safe for typical meme-coin supplies).
+// Returns token balance in whole-token units (i.e. raw / 10^18), as a JS number.
+// Uses BigInt for the division to avoid precision loss on 26-digit raw values.
 export async function getTokenBalance(tokenAddress: string, walletAddress: string): Promise<number> {
   const selector = "0x70a08231"; // balanceOf(address)
   const padded = walletAddress.toLowerCase().replace("0x", "").padStart(64, "0");
   const data = selector + padded;
   const hex = await alchemyRpc<string>("eth_call", [{ to: tokenAddress, data }, "latest"]);
   if (!hex || hex === "0x") return 0;
-  return Number(BigInt(hex));
+  const raw = BigInt(hex);
+  if (raw === 0n) return 0;
+  const DECIMALS = 10n ** 18n;
+  // Keep fractional part with enough precision for % display
+  const whole = Number(raw / DECIMALS);
+  const frac  = Number(raw % DECIMALS) / 1e18;
+  return whole + frac;
 }
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
