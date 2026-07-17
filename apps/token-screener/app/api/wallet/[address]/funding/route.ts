@@ -3,6 +3,7 @@ import { ROBINHOOD_CHAIN_ID } from "@/lib/apestore";
 import { getFundingTrace, getFunderFanOut } from "@/lib/walletTransfers";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // Phase 4: wallet funding trace. Returns the earliest known funder of this
 // wallet plus how many other dev wallets that same funder has funded.

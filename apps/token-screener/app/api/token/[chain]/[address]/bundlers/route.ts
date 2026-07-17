@@ -4,6 +4,7 @@ import { isBridgeOrExchange, BRIDGE_FANOUT_THRESHOLD } from "@/lib/bridgeWhiteli
 import { getBundlerCache, setBundlerCache } from "@/lib/bundlerCache";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const MAX_BUYERS  = 30;
 const CONCURRENCY = 5;

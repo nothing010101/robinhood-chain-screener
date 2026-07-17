@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { fetchAllLiveTokens, ROBINHOOD_CHAIN_ID } from "@/lib/apestore";
 
 export const dynamic = "force-dynamic";
+// Vercel Pro max — fetchAllLiveTokens can take 20-30s on a large chain
+export const maxDuration = 60;
 
 const MIN_MC = 7_000;
 
