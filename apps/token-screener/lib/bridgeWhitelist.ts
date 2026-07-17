@@ -14,6 +14,10 @@ export const BRIDGE_WHITELIST = new Set<string>([
   "0xa67d7eb4dc68fa6ce8e34ef8cadaf075b9893fbb",
   "0xada5bb90d0de0bd1b6f3938708f49295a8d1f7cb",
   "0xabb2acd3be814a80e502575d6c1dc5f789e9cd10",
+  // Confirmed via Blockscout (150-250+ txs, high unique-recipient fan-out):
+  "0xf70da97812cb96acdf810712aa562db8dfa3dbef",
+  "0x777336ae2cef9ddc261a61a97cbfb4e0aa7d1329",
+  "0x42838165f3fdccff8e597a694932382af1893f87",
   // Legacy placeholder entries (unconfirmed — keep until verified)
   "0x1a2b9ef49d1cd4a24dc88f014d74fceada585efa",
   "0xa5f565650890fba1824ee0f21ebbbf660a179934",
