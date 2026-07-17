@@ -5,7 +5,7 @@
     "buildCommand": "true"
   },
   "deploy": {
-    "startCommand": "pnpm --filter @workspace/worker run start",
+    "startCommand": "pnpm --filter @workspace/worker run start & pnpm --filter @workspace/telegram-bot run start & wait",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
