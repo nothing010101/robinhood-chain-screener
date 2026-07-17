@@ -523,10 +523,40 @@
     border-top:1px dashed var(--border);
     padding-top:12px;
     display:flex;
+    align-items:center;
     justify-content:space-between;
+    gap:12px;
   }
 
   .apesc-soon b{color:var(--text);}
+
+  .apesc-soon .live-dot{
+    display:inline-block;
+    width:7px;height:7px;
+    border-radius:50%;
+    background:#22c55e;
+    box-shadow:0 0 6px #22c55e;
+    animation:pulse-dot 1.8s ease-in-out infinite;
+    flex-shrink:0;
+  }
+  @keyframes pulse-dot{
+    0%,100%{opacity:1;}
+    50%{opacity:0.4;}
+  }
+
+  .apesc-bot-btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.06em;
+    padding:5px 12px;
+    border:1px solid var(--banana);
+    color:var(--banana);
+    border-radius:4px;
+    text-decoration:none;
+    transition:background 0.15s,color 0.15s;
+    white-space:nowrap;
+  }
+  .apesc-bot-btn:hover{background:var(--banana);color:#000;}
 
   /* ---------- Responsive ---------- */
   @media (max-width: 860px){
@@ -637,8 +667,11 @@
     <div class="apesc-rule"></div>
 
     <div class="apesc-soon apesc-reveal">
-      <span>next up</span>
-      <b>Screener Bot — coming soon</b>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="live-dot"></span>
+        <b>Screener Bot — live</b>
+      </div>
+      <a href="https://t.me/apescreenerstore_bot" target="_blank" rel="noopener" class="apesc-bot-btn">RUN BOT ↗</a>
     </div>
   </div>
 </section>
