@@ -224,12 +224,6 @@ bot.command("bundle", async (ctx) => {
   await editOrReply(loading.message_id, ctx, header + body);
 });
 
-// ── catch-all ─────────────────────────────────────────────────────────────────
-
-bot.on("text", (ctx) =>
-  ctx.reply("Use /scan <CA> to scan a token, /bundle <CA> for bundle analysis, or /help for usage."),
-);
-
 // ── launch ────────────────────────────────────────────────────────────────────
 
 bot.launch({ dropPendingUpdates: true });
