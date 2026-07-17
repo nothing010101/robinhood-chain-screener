@@ -52,6 +52,23 @@ function isValidCa(ca: string): boolean {
   return /^0x[0-9a-f]{40}$/i.test(ca);
 }
 
+/** Edit the loading message in-place — works in private and group chats.
+ *  Falls back to a new reply if edit fails (e.g. message too old). */
+async function editOrReply(
+  msgId: number,
+  ctx: any,
+  text: string,
+): Promise<void> {
+  try {
+    await ctx.telegram.editMessageText(ctx.chat.id, msgId, undefined, text, {
+      parse_mode: "MarkdownV2",
+      disable_web_page_preview: true,
+    });
+  } catch {
+    await ctx.replyWithMarkdownV2(text, { disable_web_page_preview: true } as any);
+  }
+}
+
 // ── /start & /help ────────────────────────────────────────────────────────────
 
 const HELP = `🦍 *ApeScreener Bot*
@@ -87,10 +104,9 @@ bot.command("scan", async (ctx) => {
     fetchJson<any>(`${API}/api/token/${CHAIN}/${ca}/holders`, 10_000),
   ]);
 
-  await ctx.telegram.deleteMessage(ctx.chat.id, loading.message_id).catch(() => {});
-
   if (!detail?.token) {
-    return ctx.reply("❌ Token not found. Make sure the CA is correct and the token exists on ape.store Robinhood Chain.");
+    await editOrReply(loading.message_id, ctx, "❌ Token not found\\. Make sure the CA is correct and the token exists on ape\\.store Robinhood Chain\\.");
+    return;
   }
 
   const t  = detail.token;
@@ -159,9 +175,7 @@ bot.command("scan", async (ctx) => {
     links,
   ].filter((l) => l != null) as string[];
 
-  await ctx.replyWithMarkdownV2(lines.join("\n"), {
-    disable_web_page_preview: true,
-  } as any);
+  await editOrReply(loading.message_id, ctx, lines.join("\n"));
 });
 
 // ── /bundle ───────────────────────────────────────────────────────────────────
@@ -177,10 +191,9 @@ bot.command("bundle", async (ctx) => {
 
   const data = await fetchJson<any>(`${API}/api/token/${CHAIN}/${ca}/bundlers`, 60_000);
 
-  await ctx.telegram.deleteMessage(ctx.chat.id, loading.message_id).catch(() => {});
-
   if (!data || data.error) {
-    return ctx.reply("❌ Bundle analysis failed. Try again in a moment.");
+    await editOrReply(loading.message_id, ctx, "❌ Bundle analysis failed\\. Try again in a moment\\.");
+    return;
   }
 
   const visible    = (data.bundles ?? []).filter((b: any) => !b.suppressed);
@@ -208,9 +221,7 @@ bot.command("bundle", async (ctx) => {
 
   const header = `📦 *Bundle Analysis*\n[${esc(short(ca))}](${BLOCKSCOUT}/token/${ca})\n`;
 
-  await ctx.replyWithMarkdownV2(header + body, {
-    disable_web_page_preview: true,
-  } as any);
+  await editOrReply(loading.message_id, ctx, header + body);
 });
 
 // ── catch-all ─────────────────────────────────────────────────────────────────
