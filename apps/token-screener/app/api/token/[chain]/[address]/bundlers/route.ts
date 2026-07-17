@@ -61,12 +61,15 @@ export async function GET(
       funderFanOut[funder] = localFanOut;
       const suppressed = isBridgeOrExchange(funder, localFanOut >= BRIDGE_FANOUT_THRESHOLD ? localFanOut : 0);
 
-      // Check sell/hold status for each bundler wallet — only on click, cheap eth_call.
+      const TOTAL_SUPPLY = 1_000_000_000;
+
+      // Check sell/hold status + % held for each bundler wallet.
       const buyersWithStatus = await Promise.all(
         buyers.map(async (buyer) => {
           const balance = await getTokenBalance(address, buyer).catch(() => -1);
-          const status: "holding" | "sold" = balance === 0 ? "sold" : "holding";
-          return { address: buyer, status };
+          const status: "holding" | "sold" = balance <= 0 ? "sold" : "holding";
+          const holdPct = balance > 0 ? (balance / TOTAL_SUPPLY) * 100 : 0;
+          return { address: buyer, status, holdPct };
         }),
       );
 

@@ -6,6 +6,7 @@ import { shortenAddress } from "@/lib/format";
 interface BuyerStatus {
   address: string;
   status: "holding" | "sold";
+  holdPct: number;
 }
 
 interface Bundle {
@@ -131,9 +132,13 @@ export function BundlerCheck({ chain, address }: { chain: string; address: strin
                           }`}
                         >
                           {shortenAddress(buyer.address)}
-                          <span className={buyer.status === "sold" ? "text-muted/60" : "text-bear"}>
-                            {buyer.status === "sold" ? "✓sold" : "⚠hold"}
-                          </span>
+                          {buyer.status === "sold" ? (
+                            <span className="text-muted/60">✓sold</span>
+                          ) : (
+                            <span className="text-bear">
+                              ⚠{buyer.holdPct.toFixed(2)}%
+                            </span>
+                          )}
                         </a>
                       ))}
                     </div>
