@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docs — Ape Screener</title>
+<meta name="description" content="Documentation for Ape Screener — how to read the screener, use bundle detection, and understand funding traces on Robinhood Chain.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0B0D08;
+    --panel:#15130C;
+    --banana:#FFC72C;
+    --amber:#FF9F1C;
+    --paper:#F3EED9;
+    --paper-dim:#A8A290;
+    --line:#2A2717;
+    --bear:#FF4D4D;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--void);
+    color:var(--paper);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.6;
+  }
+  a{color:inherit;text-decoration:none;}
+
+  /* ── Grain ── */
+  .grain{
+    position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ── Nav ── */
+  header{
+    position:sticky;top:0;z-index:10;
+    background:rgba(11,13,8,0.92);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+    padding:18px 6vw;
+  }
+  .wordmark{
+    display:flex;align-items:center;gap:10px;
+    font-family:'Archivo Black',sans-serif;font-size:16px;letter-spacing:0.02em;
+  }
+  .wordmark .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--banana);box-shadow:0 0 10px var(--banana);
+    animation:pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+  .nav-links{display:flex;align-items:center;gap:24px;}
+  .nav-links a{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;
+    letter-spacing:0.06em;color:var(--paper-dim);
+    transition:color 0.15s;
+  }
+  .nav-links a:hover{color:var(--banana);}
+  .nav-links a.active{color:var(--banana);}
+  .launch-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+    letter-spacing:0.04em;padding:8px 18px;
+    background:var(--banana);color:var(--void);border-radius:2px;
+    transition:background 0.15s;
+  }
+  .launch-btn:hover{background:var(--amber);}
+
+  /* ── Layout ── */
+  .docs-layout{
+    position:relative;z-index:2;
+    display:grid;
+    grid-template-columns:220px 1fr;
+    max-width:1100px;margin:0 auto;
+    padding:60px 6vw 120px;
+    gap:60px;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar{
+    position:sticky;top:80px;
+    height:fit-content;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .sidebar-label{
+    font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--paper-dim);margin-bottom:16px;
+  }
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;}
+  .sidebar nav a{
+    font-size:13px;color:var(--paper-dim);
+    padding:6px 10px;border-radius:4px;
+    border-left:2px solid transparent;
+    transition:color 0.15s,border-color 0.15s,background 0.15s;
+  }
+  .sidebar nav a:hover{color:var(--paper);background:rgba(255,199,44,0.04);}
+  .sidebar nav a.active{color:var(--banana);border-left-color:var(--banana);}
+  .sidebar-divider{height:1px;background:var(--line);margin:14px 0;}
+
+  /* ── Content ── */
+  .docs-content{min-width:0;}
+
+  .doc-section{
+    padding-bottom:64px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:64px;
+  }
+  .doc-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+
+  .section-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;
+    letter-spacing:0.1em;text-transform:uppercase;
+    color:var(--banana);margin-bottom:14px;
+  }
+  .doc-section h2{
+    font-family:'Archivo Black',sans-serif;
+    font-size:clamp(24px,3vw,32px);
+    line-height:1.15;margin-bottom:16px;
+  }
+  .doc-section p{
+    color:var(--paper-dim);font-size:15px;
+    max-width:640px;margin-bottom:16px;
+  }
+  .doc-section p:last-child{margin-bottom:0;}
+
+  /* callout */
+  .callout{
+    border:1px solid var(--line);border-left:3px solid var(--banana);
+    background:rgba(255,199,44,0.04);
+    border-radius:4px;padding:14px 16px;
+    font-family:'IBM Plex Mono',monospace;font-size:13px;
+    color:var(--paper-dim);line-height:1.6;
+    margin:20px 0;max-width:640px;
+  }
+  .callout b{color:var(--banana);}
+  .callout.warn{border-left-color:var(--bear);background:rgba(255,77,77,0.04);}
+  .callout.warn b{color:var(--bear);}
+
+  /* feature list */
+  .feature-list{
+    display:flex;flex-direction:column;gap:12px;
+    margin:20px 0;max-width:640px;
+  }
+  .feature-item{
+    display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;
+    padding:14px 16px;
+    border:1px solid var(--line);border-radius:6px;
+    background:var(--panel);
+  }
+  .feature-icon{
+    font-size:16px;margin-top:1px;
+  }
+  .feature-item h4{
+    font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;
+    color:var(--paper);margin-bottom:4px;
+  }
+  .feature-item p{
+    font-size:13px;color:var(--paper-dim);margin:0;
+  }
+
+  /* badge examples */
+  .badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;}
+  .badge{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;
+    padding:4px 10px;border-radius:4px;
+  }
+  .badge.hold{background:rgba(255,77,77,0.12);color:#FF4D4D;border:1px solid rgba(255,77,77,0.25);}
+  .badge.sold{background:rgba(168,162,144,0.1);color:var(--paper-dim);border:1px solid var(--line);}
+  .badge.warn{background:rgba(255,199,44,0.1);color:var(--banana);border:1px solid rgba(255,199,44,0.25);}
+  .badge.safe{background:rgba(100,200,100,0.1);color:#6DC86D;border:1px solid rgba(100,200,100,0.25);}
+
+  /* step list */
+  .steps{display:flex;flex-direction:column;gap:0;margin:20px 0;max-width:640px;}
+  .step{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;}
+  .step-num{
+    width:28px;height:28px;border-radius:50%;
+    background:rgba(255,199,44,0.1);border:1px solid rgba(255,199,44,0.3);
+    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+    color:var(--banana);display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;margin-top:2px;
+  }
+  .step-body{padding-bottom:20px;border-left:1px dashed var(--line);margin-left:-26px;padding-left:38px;}
+  .step:last-child .step-body{border-left:none;}
+  .step-body h4{
+    font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;
+    color:var(--paper);margin-bottom:6px;
+  }
+  .step-body p{font-size:13.5px;color:var(--paper-dim);margin:0;}
+
+  /* social strip */
+  .social-strip{
+    display:flex;gap:14px;flex-wrap:wrap;margin-top:24px;
+  }
+  .social-link{
+    display:flex;align-items:center;gap:8px;
+    border:1px solid var(--line);border-radius:6px;
+    padding:10px 16px;
+    font-family:'IBM Plex Mono',monospace;font-size:13px;
+    color:var(--paper-dim);
+    transition:border-color 0.15s,color 0.15s;
+  }
+  .social-link:hover{border-color:var(--banana);color:var(--banana);}
+  .social-link svg{width:16px;height:16px;fill:currentColor;flex-shrink:0;}
+
+  /* footer */
+  footer{
+    position:relative;z-index:2;
+    border-top:1px solid var(--line);
+    padding:28px 6vw;
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--paper-dim);
+  }
+
+  /* responsive */
+  @media(max-width:760px){
+    .docs-layout{grid-template-columns:1fr;gap:40px;}
+    .sidebar{position:static;display:none;}
+    .nav-links .hide-mobile{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<header>
+  <a href="/" class="wordmark">
+    <span class="dot"></span>
+    APE SCREENER
+  </a>
+  <div class="nav-links">
+    <a href="/" class="hide-mobile">Home</a>
+    <a href="/docs.html" class="active">Docs</a>
+    <a href="https://x.com/apescreener_" target="_blank" rel="noopener" class="hide-mobile">
+      <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;vertical-align:middle;">
+        <path d="M14.05 10.24 22.53 0h-2.01l-7.36 8.89L7.29 0H0l8.88 13.34L0 24h2.01l7.78-9.39L16.71 24H24L14.05 10.24Zm-2.75 3.32-.9-1.32L2.9 1.56h3.09l5.8 8.5.9 1.32 7.54 11.05h-3.09l-6.15-9.02Z"/>
+      </svg>
+    </a>
+    <a href="https://t.me/apescreenerstore" target="_blank" rel="noopener" class="hide-mobile">
+      <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;vertical-align:middle;">
+        <path d="M22.05 2.6 1.13 10.9c-1.42.58-1.41 1.38-.26 1.73l5.28 1.65 2.03 6.2c.24.68.12.95.84.95.55 0 .8-.25 1.1-.55l2.6-2.55 5.4 4.02c1 .55 1.71.27 1.96-.93l3.54-16.9c.36-1.47-.55-2.13-1.57-1.72Zm-13.6 12.4-1.44-4.6L18.8 5.3c.5-.3.96-.14.58.2L8.45 15Z"/>
+      </svg>
+    </a>
+    <a href="https://app.apescreener.store" class="launch-btn">Launch App →</a>
+  </div>
+</header>
+
+<div class="docs-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Documentation</div>
+    <nav>
+      <a href="#overview" class="active">Overview</a>
+      <a href="#screener">The Screener</a>
+      <a href="#token-page">Token Page</a>
+      <div class="sidebar-divider"></div>
+      <a href="#bundle-detection">Bundle Detection</a>
+      <a href="#hold-percentage">Hold Percentage</a>
+      <a href="#funding-trace">Funding Trace</a>
+      <div class="sidebar-divider"></div>
+      <a href="#faq">FAQ</a>
+      <a href="#community">Community</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main class="docs-content">
+
+    <!-- Overview -->
+    <section class="doc-section" id="overview">
+      <div class="section-tag">Introduction</div>
+      <h2>What is Ape Screener?</h2>
+      <p>Ape Screener is a real-time token screener built for <strong style="color:var(--paper)">ape.store</strong> on Robinhood Chain (chain ID 4663). Every token launched on the platform is pulled into one live board — with market cap, volume, holder count, and on-chain wallet intelligence that most screeners don't show.</p>
+      <p>The core purpose is simple: help you see what's really happening with a token <em>before</em> you ape in, not after.</p>
+      <div class="callout">
+        <b>Chain:</b> Robinhood Chain · #4663<br>
+        <b>Data source:</b> ape.store API + Alchemy RPC (live on-chain)<br>
+        <b>App:</b> <a href="https://app.apescreener.store" style="color:var(--banana)">app.apescreener.store</a>
+      </div>
+    </section>
+
+    <!-- The Screener -->
+    <section class="doc-section" id="screener">
+      <div class="section-tag">Main Screen</div>
+      <h2>The Screener</h2>
+      <p>The main board shows all tokens with a market cap of <strong style="color:var(--paper)">$7K or above</strong>, sorted by market cap descending by default. Tokens below $7K are still reachable via CA search.</p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">📊</div>
+          <div>
+            <h4>Market Cap Filter (MC ≥ $7K)</h4>
+            <p>Filters out very new or illiquid tokens from the default view. Keeps the board readable without hiding anything — you can still search below-threshold tokens by contract address.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔍</div>
+          <div>
+            <h4>CA Search</h4>
+            <p>Paste any contract address into the search bar to pull up that token instantly, regardless of MC. Useful for tokens freshly launched or still under $7K.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">⚡</div>
+          <div>
+            <h4>Live Data</h4>
+            <p>Price and market cap are fetched directly from ape.store on every page load — no cache, no stale numbers. What you see is the current state of the chain.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Token Page -->
+    <section class="doc-section" id="token-page">
+      <div class="section-tag">Token Detail</div>
+      <h2>Token Page</h2>
+      <p>Click any token on the screener to open its detail page at <code style="font-family:monospace;color:var(--banana);font-size:13px">app.apescreener.store/token/4663/[address]</code>. The page shows full token metadata, market stats, and two on-demand analysis tools.</p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">🧬</div>
+          <div>
+            <h4>Bundle Analysis</h4>
+            <p>Checks whether multiple early buyers share a common ETH funder — a signal of coordinated wallet setup. Triggered on click to save RPC quota.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔗</div>
+          <div>
+            <h4>Funding Trace</h4>
+            <p>Follows the earliest incoming ETH transfer to the deployer wallet, showing who funded the dev before launch. Cached after the first lookup.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bundle Detection -->
+    <section class="doc-section" id="bundle-detection">
+      <div class="section-tag">Feature</div>
+      <h2>Bundle Detection</h2>
+      <p>When you click <strong style="color:var(--paper)">Check Bundlers</strong> on a token page, the screener fetches the first 30 unique buyers and traces the earliest ETH funder for each wallet. Buyers who share the same funder are grouped as a "bundle."</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Fetch early buyers</h4>
+            <p>The first 30 wallets that received the token after launch are collected in chronological order.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Trace ETH funders</h4>
+            <p>For each buyer wallet, the earliest incoming ETH transfer is found — this is who loaded the wallet before it started buying.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Group by shared funder</h4>
+            <p>Wallets with the same ETH source are grouped. Groups of 2 or more are flagged as potential bundles.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>Check sell / hold status</h4>
+            <p>Each bundled wallet's current token balance is fetched live to show whether they still hold or have sold.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <b>Bridge suppression:</b> funders with a very high fan-out (30+ wallets funded) are treated as bridges or relayers and excluded from bundle warnings to reduce false positives.
+      </div>
+    </section>
+
+    <!-- Hold Percentage -->
+    <section class="doc-section" id="hold-percentage">
+      <div class="section-tag">Feature</div>
+      <h2>Hold Percentage</h2>
+      <p>Each bundled wallet shows its current share of total supply. All ape.store tokens launch with a fixed supply of <strong style="color:var(--paper)">1,000,000,000 (1B)</strong> tokens, so the percentage is calculated directly:</p>
+      <div class="callout">
+        <b>Formula:</b> (current balance ÷ 1,000,000,000) × 100<br>
+        <b>Example:</b> 13,434,941 tokens → 1.34%
+      </div>
+      <p>Balance is fetched live via a single <code style="font-family:monospace;color:var(--banana);font-size:13px">eth_call</code> per wallet at the moment you click Check Bundlers. It is never cached, so the number always reflects the current state.</p>
+      <div class="badge-row">
+        <span class="badge hold">⚠ 1.34% holding</span>
+        <span class="badge hold">⚠ 2.80% holding</span>
+        <span class="badge sold">✓ sold</span>
+      </div>
+      <p style="margin-top:12px">A bundle where all wallets have already sold is a lower immediate risk than one where multiple wallets are still holding a combined 5–10% of supply.</p>
+    </section>
+
+    <!-- Funding Trace -->
+    <section class="doc-section" id="funding-trace">
+      <div class="section-tag">Feature</div>
+      <h2>Funding Trace</h2>
+      <p>The Funding Trace section on a token page shows the <strong style="color:var(--paper)">earliest incoming ETH transfer</strong> to the token deployer wallet. This is not who the dev is — it is who funded the wallet that launched the token.</p>
+      <div class="callout">
+        <b>Why it matters:</b> the same funder appearing behind multiple different token deployments is a strong signal of a serial operator — a dev running many launches from wallets they control, funded from a single source.
+      </div>
+      <p>Results are cached permanently in the database after the first lookup, so repeated views are instant and don't consume Alchemy quota.</p>
+      <div class="callout warn">
+        <b>Note:</b> if the dev wallet was funded via a bridge (Relay, Owlto, etc.), the trace will show the bridge relayer address rather than the real funder. Bridge addresses are flagged and suppressed where known.
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="doc-section" id="faq">
+      <div class="section-tag">FAQ</div>
+      <h2>Common Questions</h2>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">❓</div>
+          <div>
+            <h4>Why is my token not showing on the screener?</h4>
+            <p>Tokens below $7K market cap are filtered from the default view. Paste the contract address into the CA search bar to find it directly.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">❓</div>
+          <div>
+            <h4>Does "bundle detected" mean the token is a scam?</h4>
+            <p>Not necessarily. It means multiple early wallets share a common ETH source. This could be a dev distributing to friends, a coordinated team, or genuine bundling. Use it as one signal alongside others, not a verdict.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">❓</div>
+          <div>
+            <h4>How fresh is the data?</h4>
+            <p>Market cap and price are fetched live on every page load. Bundle analysis and funding trace are cached after the first check — balances within bundle analysis are always live.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">❓</div>
+          <div>
+            <h4>What chain does Ape Screener support?</h4>
+            <p>Currently Robinhood Chain (chain ID 4663) only — the chain where ape.store's token factory is deployed.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Community -->
+    <section class="doc-section" id="community">
+      <div class="section-tag">Community</div>
+      <h2>Stay Connected</h2>
+      <p>Follow for updates, new features, and token launch alerts. The Telegram group is the fastest way to get support or report a bug.</p>
+      <div class="social-strip">
+        <a href="https://x.com/apescreener_" target="_blank" rel="noopener" class="social-link">
+          <svg viewBox="0 0 24 24"><path d="M14.05 10.24 22.53 0h-2.01l-7.36 8.89L7.29 0H0l8.88 13.34L0 24h2.01l7.78-9.39L16.71 24H24L14.05 10.24Zm-2.75 3.32-.9-1.32L2.9 1.56h3.09l5.8 8.5.9 1.32 7.54 11.05h-3.09l-6.15-9.02Z"/></svg>
+          @apescreener_
+        </a>
+        <a href="https://t.me/apescreenerstore" target="_blank" rel="noopener" class="social-link">
+          <svg viewBox="0 0 24 24"><path d="M22.05 2.6 1.13 10.9c-1.42.58-1.41 1.38-.26 1.73l5.28 1.65 2.03 6.2c.24.68.12.95.84.95.55 0 .8-.25 1.1-.55l2.6-2.55 5.4 4.02c1 .55 1.71.27 1.96-.93l3.54-16.9c.36-1.47-.55-2.13-1.57-1.72Zm-13.6 12.4-1.44-4.6L18.8 5.3c.5-.3.96-.14.58.2L8.45 15Z"/></svg>
+          t.me/apescreenerstore
+        </a>
+        <a href="https://app.apescreener.store" class="social-link">
+          <svg viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Launch App
+        </a>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <span>© 2026 APE SCREENER — BUILT ON ROBINHOOD CHAIN</span>
+  <div style="display:flex;gap:10px;">
+    <a href="https://x.com/apescreener_" target="_blank" rel="noopener" style="width:32px;height:32px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--banana)'" onmouseout="this.style.borderColor='var(--line)'">
+      <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:var(--paper-dim)"><path d="M14.05 10.24 22.53 0h-2.01l-7.36 8.89L7.29 0H0l8.88 13.34L0 24h2.01l7.78-9.39L16.71 24H24L14.05 10.24Zm-2.75 3.32-.9-1.32L2.9 1.56h3.09l5.8 8.5.9 1.32 7.54 11.05h-3.09l-6.15-9.02Z"/></svg>
+    </a>
+    <a href="https://t.me/apescreenerstore" target="_blank" rel="noopener" style="width:32px;height:32px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--banana)'" onmouseout="this.style.borderColor='var(--line)'">
+      <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:var(--paper-dim)"><path d="M22.05 2.6 1.13 10.9c-1.42.58-1.41 1.38-.26 1.73l5.28 1.65 2.03 6.2c.24.68.12.95.84.95.55 0 .8-.25 1.1-.55l2.6-2.55 5.4 4.02c1 .55 1.71.27 1.96-.93l3.54-16.9c.36-1.47-.55-2.13-1.57-1.72Zm-13.6 12.4-1.44-4.6L18.8 5.3c.5-.3.96-.14.58.2L8.45 15Z"/></svg>
+    </a>
+  </div>
+</footer>
+
+<script>
+  // Highlight active sidebar link on scroll
+  const sections = document.querySelectorAll('.doc-section');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.4 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
