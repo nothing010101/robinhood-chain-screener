@@ -10,6 +10,7 @@ import { TradesTable } from "@/components/TradesTable";
 import { DevWalletWarning } from "@/components/DevWalletWarning";
 import { FundingTrace } from "@/components/FundingTrace";
 import { BundlerCheck } from "@/components/BundlerCheck";
+import { HolderList } from "@/components/HolderList";
 import type { ApeStoreTokenDetailResponse, ApeStoreTrade } from "@/lib/apestore";
 import type { WalletLaunch } from "@/lib/walletLaunches";
 import type { FundingTrace as FundingTraceData } from "@/lib/walletTransfers";
@@ -279,6 +280,8 @@ export default function TokenDetailPage() {
         {token.holderCount == null && (
           <p className="mt-1 font-mono text-[11px] text-muted/70">{t.detail.holdersNote}</p>
         )}
+
+        <HolderList chain={String(token.chain)} address={token.address} />
 
         <BundlerCheck chain={String(token.chain)} address={token.address} />
 
