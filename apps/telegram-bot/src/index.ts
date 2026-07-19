@@ -97,59 +97,39 @@ async function editOrReply(
   }
 }
 
-// ── admin ─────────────────────────────────────────────────────────────────────
+// ── admin helpers ─────────────────────────────────────────────────────────────
 
 const ADMIN_ID = 8356291357;
+const pendingBroadcast = new Map<number, boolean>();
 
 function isAdmin(ctx: any): boolean {
   const id = ctx.message?.from?.id ?? ctx.callbackQuery?.from?.id;
   return id === ADMIN_ID;
 }
 
-async function supabaseQuery(sql: string): Promise<any[]> {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/run_admin_query`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": SUPABASE_KEY,
-      "Authorization": `Bearer ${SUPABASE_KEY}`,
-    },
-    body: JSON.stringify({ query: sql }),
-  });
-  if (!r.ok) return [];
-  return r.json();
-}
-
 async function getStats(): Promise<string> {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/bot_users?select=user_id,last_seen,command_count,first_seen`, {
-      headers: {
-        "apikey": SUPABASE_KEY,
-        "Authorization": `Bearer ${SUPABASE_KEY}`,
-      },
-    });
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/bot_users?select=user_id,last_seen,command_count,first_seen`,
+      { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
+    );
     const rows: any[] = res.ok ? await res.json() : [];
-
-    const now = Date.now();
-    const total      = rows.length;
-    const active7d   = rows.filter(r => now - new Date(r.last_seen).getTime() < 7  * 86400_000).length;
-    const active30d  = rows.filter(r => now - new Date(r.last_seen).getTime() < 30 * 86400_000).length;
-    const newToday   = rows.filter(r => now - new Date(r.first_seen).getTime() < 86400_000).length;
-    const totalCmds  = rows.reduce((s, r) => s + (r.command_count ?? 0), 0);
-
+    const now      = Date.now();
+    const total    = rows.length;
+    const active7d = rows.filter(r => now - new Date(r.last_seen).getTime()  < 7  * 86400_000).length;
+    const active30d= rows.filter(r => now - new Date(r.last_seen).getTime()  < 30 * 86400_000).length;
+    const newToday = rows.filter(r => now - new Date(r.first_seen).getTime() < 86400_000).length;
+    const totalCmd = rows.reduce((s, r) => s + (r.command_count ?? 0), 0);
     return [
-      `📊 *Statistik Bot*`,
-      ``,
-      `👤 Total user: *${total}*`,
-      `🆕 User baru hari ini: *${newToday}*`,
-      `🟢 Aktif 7 hari: *${active7d}*`,
-      `🟡 Aktif 30 hari: *${active30d}*`,
-      `⌨️ Total command: *${totalCmds}*`,
-      `📈 Rata\\-rata cmd/user: *${total ? (totalCmds / total).toFixed(1) : 0}*`,
+      `📊 *Bot Statistics*`, ``,
+      `👤 Total users: *${total}*`,
+      `🆕 New today: *${newToday}*`,
+      `🟢 Active \\(7d\\): *${active7d}*`,
+      `🟡 Active \\(30d\\): *${active30d}*`,
+      `⌨️ Total commands: *${totalCmd}*`,
+      `📈 Avg cmd/user: *${total ? (totalCmd / total).toFixed(1) : 0}*`,
     ].join("\n");
-  } catch {
-    return "❌ Gagal ambil statistik\\.";
-  }
+  } catch { return "❌ Failed to fetch statistics\\."; }
 }
 
 async function getTopUsers(): Promise<string> {
@@ -159,119 +139,27 @@ async function getTopUsers(): Promise<string> {
       { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
     );
     const rows: any[] = res.ok ? await res.json() : [];
-    if (!rows.length) return "_Belum ada data user\\._";
+    if (!rows.length) return "_No user data yet\\._";
     const lines = rows.map((r, i) => {
-      const name = esc(r.first_name ?? r.username ?? "Unknown");
+      const name  = esc(r.first_name ?? r.username ?? "Unknown");
       const uname = r.username ? ` \\(@${esc(r.username)}\\)` : "";
-      return `${i + 1}\\. ${name}${uname} — *${r.command_count}* cmd`;
+      return `${i + 1}\\. ${name}${uname} — *${r.command_count}* cmds`;
     });
-    return `🏆 *Top 10 User Aktif*\n\n` + lines.join("\n");
-  } catch {
-    return "❌ Gagal ambil data\\.";
-  }
+    return `🏆 *Top 10 Most Active Users*\n\n` + lines.join("\n");
+  } catch { return "❌ Failed to fetch data\\."; }
 }
 
-const ADMIN_MENU_TEXT = `🔐 *Admin Panel*\n\nPilih menu di bawah:`;
-const ADMIN_KEYBOARD = {
+const ADMIN_MENU_TEXT = `🔐 *Admin Panel*\n\nChoose an option below:`;
+const ADMIN_KEYBOARD  = {
   inline_keyboard: [
     [
-      { text: "📊 Statistik", callback_data: "admin_stats" },
-      { text: "🏆 Top User", callback_data: "admin_top" },
+      { text: "📊 Statistics",  callback_data: "admin_stats" },
+      { text: "🏆 Top Users",   callback_data: "admin_top"   },
     ],
-    [
-      { text: "📢 Broadcast", callback_data: "admin_broadcast" },
-    ],
+    [{ text: "📢 Broadcast", callback_data: "admin_broadcast" }],
   ],
 };
-
-// pending broadcast state per admin session
-const pendingBroadcast = new Map<number, boolean>();
-
-bot.command("admin", async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.reply("⛔ Akses ditolak.");
-  await ctx.replyWithMarkdownV2(ADMIN_MENU_TEXT, { reply_markup: ADMIN_KEYBOARD });
-});
-
-bot.action("admin_stats", async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery("⛔ Akses ditolak.");
-  await ctx.answerCbQuery();
-  const text = await getStats();
-  await ctx.replyWithMarkdownV2(text, {
-    reply_markup: { inline_keyboard: [[{ text: "🔙 Menu Admin", callback_data: "admin_back" }]] },
-  });
-});
-
-bot.action("admin_top", async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery("⛔ Akses ditolak.");
-  await ctx.answerCbQuery();
-  const text = await getTopUsers();
-  await ctx.replyWithMarkdownV2(text, {
-    reply_markup: { inline_keyboard: [[{ text: "🔙 Menu Admin", callback_data: "admin_back" }]] },
-  });
-});
-
-bot.action("admin_broadcast", async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery("⛔ Akses ditolak.");
-  await ctx.answerCbQuery();
-  pendingBroadcast.set(ADMIN_ID, true);
-  await ctx.reply(
-    "📢 *Mode Broadcast*\n\nKirim pesan yang ingin di\\-broadcast ke semua user\\.\nFormat bebas \\(teks, emoji, dll\\)\\.\n\nKetik /cancel untuk batalkan\\.",
-    { parse_mode: "MarkdownV2" }
-  );
-});
-
-bot.action("admin_back", async (ctx) => {
-  if (!isAdmin(ctx)) return ctx.answerCbQuery("⛔ Akses ditolak.");
-  await ctx.answerCbQuery();
-  await ctx.replyWithMarkdownV2(ADMIN_MENU_TEXT, { reply_markup: ADMIN_KEYBOARD });
-});
-
-bot.command("cancel", async (ctx) => {
-  if (!isAdmin(ctx)) return;
-  pendingBroadcast.delete(ADMIN_ID);
-  await ctx.reply("✅ Dibatalkan.");
-});
-
-// intercept plain text from admin when broadcast mode active
-bot.on("text", async (ctx) => {
-  const from = ctx.message.from;
-  if (from.id !== ADMIN_ID) return;
-  if (!pendingBroadcast.get(ADMIN_ID)) return;
-
-  pendingBroadcast.delete(ADMIN_ID);
-  const message = ctx.message.text;
-
-  // fetch all user_ids
-  let users: { user_id: number }[] = [];
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/bot_users?select=user_id`, {
-      headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` },
-    });
-    users = res.ok ? await res.json() : [];
-  } catch { /* ignore */ }
-
-  if (!users.length) return ctx.reply("❌ Tidak ada user terdaftar.");
-
-  const status = await ctx.reply(`📤 Mengirim ke ${users.length} user…`);
-  let ok = 0, fail = 0;
-
-  for (const u of users) {
-    try {
-      await bot.telegram.sendMessage(u.user_id, message);
-      ok++;
-    } catch {
-      fail++;
-    }
-    // small delay to avoid Telegram flood limits
-    await new Promise(r => setTimeout(r, 50));
-  }
-
-  await ctx.telegram.editMessageText(
-    ctx.chat.id, status.message_id, undefined,
-    `✅ Broadcast selesai\\!\n\n📨 Terkirim: *${ok}*\n❌ Gagal: *${fail}*`,
-    { parse_mode: "MarkdownV2" }
-  );
-});
+const BACK_KB = { inline_keyboard: [[{ text: "🔙 Back", callback_data: "admin_back" }]] };
 
 // ── /start & /help ────────────────────────────────────────────────────────────
 
@@ -431,6 +319,84 @@ bot.command("bundle", async (ctx) => {
   const header = `📦 *Bundle Analysis*\n[${esc(short(ca))}](${BLOCKSCOUT}/token/${ca})\n`;
 
   await editOrReply(loading.message_id, ctx, header + body);
+});
+
+// ── /admin ────────────────────────────────────────────────────────────────────
+
+bot.command("admin", async (ctx) => {
+  if (!isAdmin(ctx)) return ctx.reply("⛔ Access denied.");
+  await ctx.replyWithMarkdownV2(ADMIN_MENU_TEXT, { reply_markup: ADMIN_KEYBOARD });
+});
+
+bot.command("cancel", async (ctx) => {
+  if (!isAdmin(ctx)) return;
+  pendingBroadcast.delete(ADMIN_ID);
+  await ctx.reply("✅ Cancelled.");
+});
+
+bot.action("admin_stats", async (ctx) => {
+  if (!isAdmin(ctx)) return ctx.answerCbQuery("⛔ Access denied.");
+  await ctx.answerCbQuery();
+  await ctx.replyWithMarkdownV2(await getStats(), { reply_markup: BACK_KB });
+});
+
+bot.action("admin_top", async (ctx) => {
+  if (!isAdmin(ctx)) return ctx.answerCbQuery("⛔ Access denied.");
+  await ctx.answerCbQuery();
+  await ctx.replyWithMarkdownV2(await getTopUsers(), { reply_markup: BACK_KB });
+});
+
+bot.action("admin_broadcast", async (ctx) => {
+  if (!isAdmin(ctx)) return ctx.answerCbQuery("⛔ Access denied.");
+  await ctx.answerCbQuery();
+  pendingBroadcast.set(ADMIN_ID, true);
+  await ctx.reply(
+    "📢 *Broadcast Mode*\n\nSend the message you want to broadcast to all users\\.\nSupports text, emoji, etc\\.\n\nType /cancel to abort\\.",
+    { parse_mode: "MarkdownV2" }
+  );
+});
+
+bot.action("admin_back", async (ctx) => {
+  if (!isAdmin(ctx)) return ctx.answerCbQuery("⛔ Access denied.");
+  await ctx.answerCbQuery();
+  await ctx.replyWithMarkdownV2(ADMIN_MENU_TEXT, { reply_markup: ADMIN_KEYBOARD });
+});
+
+// ── broadcast text interceptor (MUST be last — after all bot.command handlers) ─
+
+bot.on("text", async (ctx) => {
+  const from = ctx.message.from;
+  if (from.id !== ADMIN_ID || !pendingBroadcast.get(ADMIN_ID)) return;
+
+  pendingBroadcast.delete(ADMIN_ID);
+  const message = ctx.message.text;
+
+  let users: { user_id: number }[] = [];
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/bot_users?select=user_id`, {
+      headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` },
+    });
+    users = res.ok ? await res.json() : [];
+  } catch { /* ignore */ }
+
+  if (!users.length) return ctx.reply("❌ No registered users.");
+
+  const status = await ctx.reply(`📤 Sending to ${users.length} users…`);
+  let ok = 0, fail = 0;
+
+  for (const u of users) {
+    try {
+      await bot.telegram.sendMessage(u.user_id, message);
+      ok++;
+    } catch { fail++; }
+    await new Promise(r => setTimeout(r, 50)); // avoid flood limits
+  }
+
+  await ctx.telegram.editMessageText(
+    ctx.chat.id, status.message_id, undefined,
+    `✅ *Broadcast complete\\!*\n\n📨 Sent: *${ok}*\n❌ Failed: *${fail}*`,
+    { parse_mode: "MarkdownV2" }
+  );
 });
 
 // ── launch ────────────────────────────────────────────────────────────────────
